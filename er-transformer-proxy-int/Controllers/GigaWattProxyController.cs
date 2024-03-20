@@ -8,14 +8,10 @@
     [Route("[controller]")]
     public class GigaWattProxyController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
-        private readonly HttpClient _httpClient;
         private readonly IBrandFactory _inverterFactory;
 
-        public GigaWattProxyController(IHttpClientFactory httpClientFactory, IConfiguration configuration, IBrandFactory inverterFactory)
+        public GigaWattProxyController( IBrandFactory inverterFactory)
         {
-            _httpClient = httpClientFactory.CreateClient();
-            _configuration = configuration;
             _inverterFactory = inverterFactory;
         }
 
