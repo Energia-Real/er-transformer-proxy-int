@@ -18,6 +18,7 @@ namespace er_transformer_proxy_int.Controllers
             var routeBuilder = routes.MapGroup("/api/v1/integrators/proxy");
 
             GetDeviceList(routeBuilder);
+            GetSiteDetailsByPlant(routeBuilder);
         }
 
         private static void GetDeviceList(RouteGroupBuilder rgb)
@@ -44,8 +45,37 @@ namespace er_transformer_proxy_int.Controllers
             })
                 .Produces(200, typeof(DeviceData))
             .Produces(204)
-            .WithTags("huawei")
+            .WithTags("Proxy")
             .WithName("GetDeviceList")
+            .WithOpenApi();
+        }
+
+        private static void GetSiteDetailsByPlant(RouteGroupBuilder rgb)
+        {
+            rgb.MapPost("GetSiteDetailsByPlant", async (HttpContext context, [FromBody] RequestModel request) =>
+            {
+                string brand = request.Brand;
+                string plantCode = request.PlantCode;
+                try
+                {
+                    var inverter = _inverterFactory.Create(brand.ToLower());
+                    var response = await inverter.GetSiteDetailByPlantsAsync(plantCode);
+                    if (response is null || response.Data is null)
+                    {
+                        return Results.NoContent();
+                    }
+
+                    return Results.Ok(response);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex.Message);
+                }
+            })
+                .Produces(200, typeof(DeviceData))
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("GetSiteDetailsByPlant")
             .WithOpenApi();
         }
     }
