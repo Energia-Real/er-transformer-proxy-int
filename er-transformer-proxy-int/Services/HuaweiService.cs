@@ -34,7 +34,7 @@ namespace er_transformer_proxy_int.Services
         {
             var response = await _repository.GetRealTimeDeviceInfoAsync(request);
 
-            return new ResponseModel<string> {  ErrorMessage = response.ErrorMessage, Success = response.Success };
+            return new ResponseModel<string> { ErrorMessage = response.ErrorMessage, Success = response.Success, Data = response.Data };
         }
     }
 }

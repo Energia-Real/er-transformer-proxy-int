@@ -62,7 +62,7 @@
                 try
                 {
                     var siteDetail = await bussineslogic.GetSiteDetails(request);
-                    if (siteDetail is null || siteDetail.Success)
+                    if (siteDetail is null || !siteDetail.Success)
                     {
                         return Results.NoContent();
                     }

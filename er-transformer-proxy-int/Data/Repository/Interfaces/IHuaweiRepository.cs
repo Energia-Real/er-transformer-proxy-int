@@ -8,6 +8,6 @@
     {
         Task<DeviceData> GetDevListMethodAsync(string stationCode);
 
-        Task<JResponseModel> GetRealTimeDeviceInfoAsync(FiveMinutesRequest request);
+        Task<ResponseModel<string>> GetRealTimeDeviceInfoAsync(FiveMinutesRequest request);
     }
 }

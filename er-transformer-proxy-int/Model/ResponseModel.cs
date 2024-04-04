@@ -29,5 +29,8 @@ namespace er_transformer_proxy_int.Model
 
         [Newtonsoft.Json.JsonProperty("errorCode")]
         public int? ErrorCode { get; set; }
+
+        [Newtonsoft.Json.JsonProperty("data")]
+        public string? Data { get; set; }
     }
 }

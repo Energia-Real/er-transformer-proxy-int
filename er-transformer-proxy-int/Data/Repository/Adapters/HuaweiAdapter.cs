@@ -4,8 +4,8 @@
     using er_transformer_proxy_int.Model;
     using er_transformer_proxy_int.Model.Dto;
     using er_transformer_proxy_int.Model.Huawei;
+    using Newtonsoft.Json;
     using System.Text;
-    using System.Text.Json;
 
     public class HuaweiAdapter : IHuaweiRepository
     {
@@ -34,17 +34,17 @@
 
             // Procesar la respuesta de la API de dispositivo
             string responseContent = await response.Content.ReadAsStringAsync();
-            var responsedata = JsonSerializer.Deserialize<DeviceData>(responseContent);
+            var responsedata = JsonConvert.DeserializeObject<DeviceData>(responseContent);
             return responsedata;
         }
 
-        public async Task<JResponseModel> GetRealTimeDeviceInfoAsync(FiveMinutesRequest request)
+        public async Task<ResponseModel<string>> GetRealTimeDeviceInfoAsync(FiveMinutesRequest request)
         {
             var api = _configuration["APIs:HuaweiApi"];
-            var apiUrl = string.Format("{0}{1}", api, "realTimeInfo");
+            var apiUrl = $"{api}realTimeInfo"; // Uso de interpolación de cadenas
 
             // Enviar solicitud a la API de dispositivo
-            var requestBody = JsonSerializer.Serialize(request);
+            var requestBody = JsonConvert.SerializeObject(request); // Usar JsonConvert en lugar de JsonSerializer
             var requestContent = new StringContent(requestBody, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync(apiUrl, requestContent);
 
@@ -54,10 +54,10 @@
             }
 
             // Procesar la respuesta de la API de dispositivo
-            string responseContent = await response.Content.ReadAsStringAsync();
-            var responsedata = JsonSerializer.Deserialize<JResponseModel>(responseContent);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var responseData = JsonConvert.DeserializeObject<ResponseModel<string>>(responseContent); // Corrección en la deserialización
 
-            return JsonSerializer.Deserialize<JResponseModel>("");
+            return responseData;
         }
     }
 }
