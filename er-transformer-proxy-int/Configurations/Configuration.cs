@@ -4,6 +4,7 @@ using er_transformer_proxy_int.Data.Repository.Interfaces;
 using er_transformer_proxy_int.Services.Interfaces;
 using er_transformer_proxy_int.Services;
 using er_transformer_proxy_int.Controllers;
+using er_transformer_proxy_int.BussinesLogic;
 
 namespace er_transformer_proxy_int.Configurations
 {
@@ -25,11 +26,14 @@ namespace er_transformer_proxy_int.Configurations
             // Register IHuaweiRepository in the service container
             builder.Services.AddSingleton<IHuaweiRepository, HuaweiAdapter>();
 
+            builder.Services.AddSingleton<IMongoRepository, MongoAdapter>();
+
             // Register IBrandFactory in the service container
             builder.Services.AddSingleton<IBrandFactory, BrandFactory>();
+            builder.Services.AddSingleton<IGigawattLogic, GigawattLogic>();
 
             // Configuración de la dependencia _inverterFactory
-            IntegratorProxyEndPoints.SetBrandFactory(builder.Services.BuildServiceProvider().GetService<IBrandFactory>());
+            IntegratorProxyEndPoints.SetBrandFactory(builder.Services.BuildServiceProvider().GetService<IBrandFactory>(), builder.Services.BuildServiceProvider().GetService<IGigawattLogic>());
         }
 
         public static void RegisterMiddlewares(this WebApplication app)

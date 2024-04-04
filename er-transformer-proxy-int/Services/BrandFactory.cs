@@ -1,9 +1,8 @@
-﻿using er_transformer_proxy_int.Data.Repository.Interfaces;
-using er_transformer_proxy_int.Services.Interfaces;
-using System;
-
-namespace er_transformer_proxy_int.Services
+﻿namespace er_transformer_proxy_int.Services
 {
+    using er_transformer_proxy_int.Data.Repository.Interfaces;
+    using er_transformer_proxy_int.Services.Interfaces;
+
     public class BrandFactory : IBrandFactory
     {
         private readonly Dictionary<string, Func<IBrand>> _factories;

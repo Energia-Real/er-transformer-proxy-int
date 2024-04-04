@@ -1,6 +1,7 @@
 ﻿using er_transformer_proxy_int.Data.Repository.Interfaces;
 using er_transformer_proxy_int.Model;
 using er_transformer_proxy_int.Model.Dto;
+using er_transformer_proxy_int.Model.Gigawatt;
 using er_transformer_proxy_int.Model.Huawei;
 using er_transformer_proxy_int.Services.Interfaces;
 using System;
@@ -23,10 +24,17 @@ namespace er_transformer_proxy_int.Services
         }
 
 
-        public async Task<ResponseModel> GetSiteDetailByPlantsAsync(string stationCode)
+        public async Task<ResponseModel<SiteResume>> GetSiteDetailByPlantsAsync(string stationCode)
         {
             var mockResponse = new SiteResume { AvoidedEmmisions = (decimal)31.56, CoincidentSolarConsumptions = (decimal)72727.32, EnergyCoverage = (decimal)37.8, LastConnectionTimeStamp = DateTime.Now, LifetimeEnergyProdution = (decimal)76894.32, LifetimeEnergyConsumption = (decimal)134658.93 };
-            return new ResponseModel { ErrorMessage = null, Success = true, Data = mockResponse };
+            return new ResponseModel<SiteResume> { ErrorMessage = null, Success = true, Data = mockResponse };
+        }
+
+        public async Task<ResponseModel<string>> GetRealTimeDeviceInfo(FiveMinutesRequest request)
+        {
+            var response = await _repository.GetRealTimeDeviceInfoAsync(request);
+
+            return new ResponseModel<string> {  ErrorMessage = response.ErrorMessage, Success = response.Success };
         }
     }
 }
