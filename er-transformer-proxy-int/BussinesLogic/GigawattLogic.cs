@@ -111,7 +111,34 @@ namespace er_transformer_proxy_int.BussinesLogic
                 return response;
             }
 
+            return response;
+        }
 
+        public async Task<ResponseModel<CommonTileResponse>> GetStationCapacity(RequestModel request)
+        {
+            var response = new ResponseModel<CommonTileResponse> { ErrorCode = 204, Success = false };
+            // genera la instancia de la marca correspondiente
+            var inverterBrand = _inverterFactory.Create(request.Brand.ToLower());
+            if (inverterBrand is null)
+            {
+                response.ErrorMessage = "La marca indicada no existe";
+                return response;
+            }
+
+            var plantResponse = await this.GetPlantdeviceData(request);
+            var metterList = plantResponse.metterList;
+            var inverterList = plantResponse.invertersList;
+
+            if (!metterList.Any() && !inverterList.Any())
+            {
+                response.ErrorMessage = "Sin resultados.";
+            }
+
+            var commonTiles = new List<CommonTileResponse>();
+
+            var plantCapacity = inverterList.Sum(a=>a.dataItemMap.mppt_total_cap);
+
+            commonTiles.Add(new CommonTileResponse { Title = "Total Capacity", Value = plantCapacity.ToString() });
             return response;
         }
 
@@ -128,6 +155,8 @@ namespace er_transformer_proxy_int.BussinesLogic
 
             string devIds = string.Empty;
             var deviceResult = new PlantDeviceResult();
+            deviceResult.metterList = new List<DeviceDataResponse<DeviceMetterDataItem>>();
+            deviceResult.invertersList=new List<DeviceDataResponse<DeviceInverterDataItem>>();
             // itera los tipos para extraer
             foreach (var group in groupedDevices)
             {

@@ -11,5 +11,6 @@ namespace er_transformer_proxy_int.BussinesLogic
         Task<ResponseModel<List<CommonTileResponse>>> GetOverview(RequestModel request);
 
         Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(RequestModel request);
+        Task<ResponseModel<CommonTileResponse>> GetStationCapacity(RequestModel request);
     }
 }

@@ -24,6 +24,7 @@
             GetSiteDetailsByPlant(routeBuilder);
             GetOverviewByPlant(routeBuilder);
             GetStationHealtCheck(routeBuilder);
+            GetInstalledCapacity(routeBuilder);
         }
 
         private static void GetDeviceList(RouteGroupBuilder rgb)
@@ -134,6 +135,32 @@
             .Produces(204)
             .WithTags("Proxy")
             .WithName("getStationHealtCheck")
+            .WithOpenApi();
+        }
+
+        private static void GetInstalledCapacity(RouteGroupBuilder rgb)
+        {
+            rgb.MapPost("getInstalledCapacity", async (HttpContext context, [FromBody] RequestModel request) =>
+            {
+                try
+                {
+                    var siteDetail = await bussineslogic.GetStationCapacity(request);
+                    if (siteDetail is null || siteDetail.Success)
+                    {
+                        return Results.NoContent();
+                    }
+
+                    return Results.Ok(siteDetail);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex.Message);
+                }
+            })
+                .Produces(200, typeof(ResponseModel<List<CommonTileResponse>>))
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("getInstalledCapacity")
             .WithOpenApi();
         }
     }
