@@ -3,9 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34511.84
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "er-transformer-proxy-int", "er-transformer-proxy-int\er-transformer-proxy-int.csproj", "{33B1E860-29C7-4B70-A612-8CEDF913AA49}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "er-console-proxy-replicator", "er-console-proxy-replicator\er-console-proxy-replicator.csproj", "{6D1A953F-D942-4100-BFD8-51399F442A6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "er-transformer-proxy-int", "er-transformer-proxy-int\er-transformer-proxy-int.csproj", "{33B1E860-29C7-4B70-A612-8CEDF913AA49}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +15,6 @@ Global
 		{33B1E860-29C7-4B70-A612-8CEDF913AA49}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33B1E860-29C7-4B70-A612-8CEDF913AA49}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{33B1E860-29C7-4B70-A612-8CEDF913AA49}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6D1A953F-D942-4100-BFD8-51399F442A6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6D1A953F-D942-4100-BFD8-51399F442A6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6D1A953F-D942-4100-BFD8-51399F442A6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6D1A953F-D942-4100-BFD8-51399F442A6E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
