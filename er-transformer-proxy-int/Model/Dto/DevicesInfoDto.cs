@@ -3,6 +3,7 @@
     using er_transformer_proxy_int.Model.Huawei;
     using System;
     using System.Collections.Generic;
+    using System.Reflection;
 
     public class DeviceInverterDataItem
     {
@@ -86,6 +87,25 @@
         public double pv10_i { get; set; }
         public double pv7_i { get; set; }
         public double pv9_i { get; set; }
+
+        public double SumMPPTCapacities()
+        {
+            double sumaCapacidades = 0;
+
+            Type type = typeof(DeviceInverterDataItem);
+            PropertyInfo[] properties = type.GetProperties();
+
+            foreach (var property in properties)
+            {
+                if (property.Name.StartsWith("mppt_") && property.Name.EndsWith("_cap"))
+                {
+                    double value = (double)property.GetValue(this);
+                    sumaCapacidades += value;
+                }
+            }
+
+            return sumaCapacidades;
+        }
     }
 
     public class DeviceMetterDataItem
@@ -134,6 +154,8 @@
     {
         public long devId { get; set; }
         public long collectTime { get; set; }
+        public string stationCode { get; set; }
+
         public T dataItemMap { get; set; }
     }
 

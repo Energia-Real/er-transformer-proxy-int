@@ -36,5 +36,12 @@ namespace er_transformer_proxy_int.Services
 
             return new ResponseModel<string> { ErrorMessage = response.ErrorMessage, Success = response.Success, Data = response.Data };
         }
+
+        public async Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(string request)
+        {
+            var response = await _repository.GetStationHealtCheck(request);
+
+            return new ResponseModel<HealtCheckModel> { ErrorMessage = response.ErrorMessage, Success = response.Success, Data = response.Data, ErrorCode= response.ErrorCode };
+        }
     }
 }

@@ -9,5 +9,7 @@
         Task<DeviceData> GetDevListMethodAsync(string stationCode);
 
         Task<ResponseModel<string>> GetRealTimeDeviceInfoAsync(FiveMinutesRequest request);
+
+        Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(string stationCodes);
     }
 }

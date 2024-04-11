@@ -22,11 +22,13 @@
 
             GetDeviceList(routeBuilder);
             GetSiteDetailsByPlant(routeBuilder);
+            GetOverviewByPlant(routeBuilder);
+            GetStationHealtCheck(routeBuilder);
         }
 
         private static void GetDeviceList(RouteGroupBuilder rgb)
         {
-            rgb.MapPost("GetDeviceList", async (HttpContext context, [FromBody] RequestModel request) =>
+            rgb.MapPost("getDeviceList", async (HttpContext context, [FromBody] RequestModel request) =>
             {
                 string brand = request.Brand;
                 string plantCode = request.PlantCode;
@@ -49,13 +51,13 @@
                 .Produces(200, typeof(DeviceData))
             .Produces(204)
             .WithTags("Proxy")
-            .WithName("GetDeviceList")
+            .WithName("getDeviceList")
             .WithOpenApi();
         }
 
         private static void GetSiteDetailsByPlant(RouteGroupBuilder rgb)
         {
-            rgb.MapPost("GetSiteDetailsByPlant", async (HttpContext context, [FromBody] RequestModel request) =>
+            rgb.MapPost("getSiteDetailsByPlant", async (HttpContext context, [FromBody] RequestModel request) =>
             {
                 string brand = request.Brand;
                 string plantCode = request.PlantCode;
@@ -77,7 +79,7 @@
                 .Produces(200, typeof(ResponseModel<List<CommonTileResponse>>))
             .Produces(204)
             .WithTags("Proxy")
-            .WithName("GetSiteDetailsByPlant")
+            .WithName("getSiteDetailsByPlant")
             .WithOpenApi();
         }
 
@@ -89,7 +91,7 @@
                 string plantCode = request.PlantCode;
                 try
                 {
-                    var siteDetail = await bussineslogic.GetSiteDetails(request);
+                    var siteDetail = await bussineslogic.GetOverview(request);
                     if (siteDetail is null || siteDetail.Success)
                     {
                         return Results.NoContent();
@@ -106,6 +108,32 @@
             .Produces(204)
             .WithTags("Proxy")
             .WithName("GetOverviewByPlant")
+            .WithOpenApi();
+        }
+
+        private static void GetStationHealtCheck(RouteGroupBuilder rgb) 
+        {
+            rgb.MapPost("getStationHealtCheck", async (HttpContext context, [FromBody] RequestModel request) =>
+            {
+                try
+                {
+                    var siteDetail = await bussineslogic.GetStationHealtCheck(request);
+                    if (siteDetail is null || siteDetail.Success)
+                    {
+                        return Results.NoContent();
+                    }
+
+                    return Results.Ok(siteDetail);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex.Message);
+                }
+            })
+                .Produces(200, typeof(ResponseModel<List<CommonTileResponse>>))
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("getStationHealtCheck")
             .WithOpenApi();
         }
     }
