@@ -118,7 +118,9 @@
             {
                 try
                 {
+                    // obtiene el estado actual de la planta
                     var siteDetail = await bussineslogic.GetStationHealtCheck(request);
+
                     if (siteDetail is null || !siteDetail.Success)
                     {
                         return Results.NoContent();
