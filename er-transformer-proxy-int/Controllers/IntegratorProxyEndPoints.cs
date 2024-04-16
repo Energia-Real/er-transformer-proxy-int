@@ -93,7 +93,7 @@
                 try
                 {
                     var siteDetail = await bussineslogic.GetOverview(request);
-                    if (siteDetail is null || siteDetail.Success)
+                    if (siteDetail is null || !siteDetail.Success)
                     {
                         return Results.NoContent();
                     }
@@ -119,7 +119,7 @@
                 try
                 {
                     var siteDetail = await bussineslogic.GetStationHealtCheck(request);
-                    if (siteDetail is null || siteDetail.Success)
+                    if (siteDetail is null || !siteDetail.Success)
                     {
                         return Results.NoContent();
                     }
@@ -145,7 +145,7 @@
                 try
                 {
                     var siteDetail = await bussineslogic.GetStationCapacity(request);
-                    if (siteDetail is null || siteDetail.Success)
+                    if (siteDetail is null || !siteDetail.Success)
                     {
                         return Results.NoContent();
                     }

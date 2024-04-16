@@ -73,6 +73,7 @@ namespace er_transformer_proxy_int.BussinesLogic
             if (!metterList.Any() && !inverterList.Any())
             {
                 response.ErrorMessage = "Sin resultados.";
+                return response;
             }
 
             var installCapacityAC = inverterList.Sum(a=>a.dataItemMap.mppt_total_cap);
@@ -86,6 +87,10 @@ namespace er_transformer_proxy_int.BussinesLogic
             // realizamos el mapeo de cada tile a devolver
             commonTiles.Add(new CommonTileResponse { Title = "Install capacity (AC)", Value = installCapacityAC.ToString() });
             commonTiles.Add(new CommonTileResponse { Title = "Install capacity (DC)", Value = Convert.ToString(installCapacityDC) });
+
+            response.Data = commonTiles;
+            response.Success = true;
+            response.ErrorCode = 200;
 
             return response;
         }
@@ -111,12 +116,15 @@ namespace er_transformer_proxy_int.BussinesLogic
                 return response;
             }
 
+            response.Data = devicesRealTimeInfo.Data;
+            response.Success = devicesRealTimeInfo.Success;
+
             return response;
         }
 
-        public async Task<ResponseModel<CommonTileResponse>> GetStationCapacity(RequestModel request)
+        public async Task<ResponseModel<List<CommonTileResponse>>> GetStationCapacity(RequestModel request)
         {
-            var response = new ResponseModel<CommonTileResponse> { ErrorCode = 204, Success = false };
+            var response = new ResponseModel<List<CommonTileResponse>> { ErrorCode = 204, Success = false };
             // genera la instancia de la marca correspondiente
             var inverterBrand = _inverterFactory.Create(request.Brand.ToLower());
             if (inverterBrand is null)
@@ -132,6 +140,7 @@ namespace er_transformer_proxy_int.BussinesLogic
             if (!metterList.Any() && !inverterList.Any())
             {
                 response.ErrorMessage = "Sin resultados.";
+                return response;
             }
 
             var commonTiles = new List<CommonTileResponse>();
@@ -139,6 +148,11 @@ namespace er_transformer_proxy_int.BussinesLogic
             var plantCapacity = inverterList.Sum(a=>a.dataItemMap.mppt_total_cap);
 
             commonTiles.Add(new CommonTileResponse { Title = "Total Capacity", Value = plantCapacity.ToString() });
+
+            response.Data = commonTiles;
+            response.ErrorCode = 200;
+            response.Success = true;
+
             return response;
         }
 
@@ -183,7 +197,7 @@ namespace er_transformer_proxy_int.BussinesLogic
 
                 // obtiene los datos del endpoint de tiempo real
                 var devicesRealTimeInfo = await inverterBrand.GetRealTimeDeviceInfo(realtimeRequest);
-                if (!devicesRealTimeInfo.Success)
+                if (!devicesRealTimeInfo.Success || devicesRealTimeInfo.Data is null)
                 {
                     continue;
                 }
