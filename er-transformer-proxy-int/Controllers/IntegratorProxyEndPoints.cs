@@ -46,7 +46,7 @@
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(ex.Message);
+                    return Results.BadRequest(ex);
                 }
             })
                 .Produces(200, typeof(DeviceData))
@@ -74,7 +74,7 @@
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(ex.Message);
+                    return Results.BadRequest(ex);
                 }
             })
                 .Produces(200, typeof(ResponseModel<List<CommonTileResponse>>))
@@ -102,7 +102,7 @@
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(ex.Message);
+                    return Results.BadRequest(ex);
                 }
             })
                 .Produces(200, typeof(ResponseModel<List<CommonTileResponse>>))
