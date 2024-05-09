@@ -6,13 +6,13 @@ using er_transformer_proxy_int.Model.Dto;
 using er_transformer_proxy_int.Model.Gigawatt;
 using er_transformer_proxy_int.Model.Huawei;
 using er_transformer_proxy_int.Services.Interfaces;
-using System;
 using System.Data;
-using System.Reflection;
 using System.Text.Json;
+using MoreLinq;
 
 namespace er_transformer_proxy_int.BussinesLogic
 {
+    //2405067698
     public class GigawattLogic : IGigawattLogic
     {
         private const double factorEnergia = .438;
@@ -29,13 +29,27 @@ namespace er_transformer_proxy_int.BussinesLogic
         {
             var response = new ResponseModel<List<CommonTileResponse>> { ErrorCode = 401, Success = false };
             var commonTiles = new List<CommonTileResponse>();
-            var plantResponse = await this.GetPlantdeviceData(request);
+            var plantResponse = await this.GetPlantDeviceDataFromMongo(request);
+
+            if (plantResponse is null)
+            {
+                plantResponse = await this.GetPlantdeviceData(request);
+            }
+
             var metterList = plantResponse.metterList;
             var inverterList = plantResponse.invertersList;
 
             if (!metterList.Any() && !inverterList.Any())
             {
-                response.ErrorMessage = "Sin resultados.";
+                plantResponse = await this.GetPlantdeviceData(request);
+                response.ErrorMessage = "Sin resultados de mongo.";
+            }
+
+            if (!metterList.Any() && !inverterList.Any())
+            {
+                response.Success = false;
+                response.ErrorMessage = "Sin resultados en sistema.";
+                return response;
             }
 
             // realiza el calculo de los datos que devolvera cada tile
@@ -66,19 +80,26 @@ namespace er_transformer_proxy_int.BussinesLogic
         {
             var response = new ResponseModel<List<CommonTileResponse>> { ErrorCode = 401, Success = false };
             var commonTiles = new List<CommonTileResponse>();
-            var plantResponse = await this.GetPlantdeviceData(request);
+            var plantResponse = await this.GetPlantDeviceDataFromMongo(request);
             var metterList = plantResponse.metterList;
             var inverterList = plantResponse.invertersList;
 
             if (!metterList.Any() && !inverterList.Any())
             {
-                response.ErrorMessage = "Sin resultados.";
+                plantResponse = await this.GetPlantdeviceData(request);
+                response.ErrorMessage = "Sin resultados de mongo.";
+            }
+
+            if (!metterList.Any() && !inverterList.Any())
+            {
+                response.Success = false;
+                response.ErrorMessage = "Sin resultados en sistema.";
                 return response;
             }
 
-            var installCapacityAC = inverterList.Sum(a=>a.dataItemMap.mppt_total_cap);
+            var installCapacityAC = inverterList.Sum(a => a.dataItemMap.mppt_total_cap);
 
-            double installCapacityDC = 0; 
+            double? installCapacityDC = 0;
             foreach (var item in inverterList)
             {
                 installCapacityDC = item.dataItemMap.SumMPPTCapacities();
@@ -97,7 +118,7 @@ namespace er_transformer_proxy_int.BussinesLogic
 
         public async Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(RequestModel request)
         {
-            var response = new ResponseModel<HealtCheckModel> { ErrorCode= 204, Success=false };
+            var response = new ResponseModel<HealtCheckModel> { ErrorCode = 204, Success = false };
             // genera la instancia de la marca correspondiente
             var inverterBrand = _inverterFactory.Create(request.Brand.ToLower());
             if (inverterBrand is null)
@@ -133,19 +154,26 @@ namespace er_transformer_proxy_int.BussinesLogic
                 return response;
             }
 
-            var plantResponse = await this.GetPlantdeviceData(request);
+            var plantResponse = await this.GetPlantDeviceDataFromMongo(request);
             var metterList = plantResponse.metterList;
             var inverterList = plantResponse.invertersList;
 
             if (!metterList.Any() && !inverterList.Any())
             {
-                response.ErrorMessage = "Sin resultados.";
+                plantResponse = await this.GetPlantdeviceData(request);
+                response.ErrorMessage = "Sin resultados de mongo.";
+            }
+
+            if (!metterList.Any() && !inverterList.Any())
+            {
+                response.Success = false;
+                response.ErrorMessage = "Sin resultados en sistema.";
                 return response;
             }
 
             var commonTiles = new List<CommonTileResponse>();
 
-            var plantCapacity = inverterList.Sum(a=>a.dataItemMap.mppt_total_cap);
+            var plantCapacity = inverterList.Sum(a => a.dataItemMap.mppt_total_cap);
 
             commonTiles.Add(new CommonTileResponse { Title = "Total Capacity", Value = plantCapacity.ToString() });
 
@@ -156,10 +184,152 @@ namespace er_transformer_proxy_int.BussinesLogic
             return response;
         }
 
+        public async Task<bool> ReplicateToMongoDb()
+        {
+            // obtiene de mongo todas las plantas y sus dispositivos
+            var proyects = await this._repository.GetDeviceDataAsync();
+            if (proyects is null || !proyects.Any())
+            {
+                return false;
+            }
+
+            // replica todos los datos de todos los dispositivos
+            var devices = await this.ReplicateAlldeviceData(proyects);
+
+            // agrupa los dispositivos por proyecto
+            foreach (var proyect in proyects.GroupBy(a => a.stationCode))
+            {
+                var insertIntoMongo = new PlantDeviceResult();
+                insertIntoMongo.invertersList = new List<DeviceDataResponse<DeviceInverterDataItem>>();
+                insertIntoMongo.metterList = new List<DeviceDataResponse<DeviceMetterDataItem>>();
+
+                // por cada proyecto filtra los dispositivos por tipo para agregarlos a la BD
+                foreach (var device in proyect)
+                {
+                    var tosave = devices.invertersList.FirstOrDefault(a => a.devId == device.deviceId);
+
+                    insertIntoMongo.brandName = "huawei";
+                    insertIntoMongo.stationCode = device.stationCode;
+                    if (tosave is not null)
+                    {
+                        insertIntoMongo.invertersList.Add(tosave);
+                    }
+                    else
+                    {
+                        var metter = devices.metterList.FirstOrDefault(a => a.devId == device.deviceId);
+
+                        if (metter is not null)
+                        {
+                            insertIntoMongo.metterList.Add(metter); 
+                        }
+                    }
+                }
+
+                await this._repository.InsertDeviceDataAsync(insertIntoMongo);
+            }
+
+            return true;
+        }
+
+        public async Task<PlantDeviceResult> GetPlantDeviceDataFromMongo(RequestModel request)
+        {
+            return await this._repository.GetRepliedDataAsync(request);
+        }
+
+
+        private async Task<PlantDeviceResult> ReplicateAlldeviceData(List<Device> devices)
+        {
+            // genera la instancia de la marca correspondiente
+            var inverterBrand = _inverterFactory.Create("huawei");
+
+            // separa en lista segun el tipo de dispositivo
+            var inverters = devices.Where(a => a.devTypeId == 1).ToList();
+            var metters = devices.Where(a => a.devTypeId == 17).ToList();
+
+            // lo separa en grupos de 100 ya que el endpoint solo acepta un maximo de 100
+            var gruposDe100 = inverters.Batch(100).ToList();
+
+            // instancias de respuesta
+            var responseAlldevices = new PlantDeviceResult();
+            responseAlldevices.invertersList = new List<DeviceDataResponse<DeviceInverterDataItem>>();
+            responseAlldevices.metterList = new List<DeviceDataResponse<DeviceMetterDataItem>>();
+
+            var inverterlist = new List<DeviceDataResponse<DeviceInverterDataItem>>();
+            var metterlist = new List<DeviceDataResponse<DeviceMetterDataItem>>();
+
+            // genera el request para replicar los inversores
+            foreach (var group in gruposDe100)
+            {
+                var devIdsList = new List<string>();
+                foreach (var item in group)
+                {
+                    devIdsList.Add(item.deviceId.ToString());
+                }
+
+                var devIds = string.Join(",", devIdsList);
+                var realtimeRequest = new FiveMinutesRequest
+                {
+                    devIds = devIds,
+                    devTypeId = 1
+                };
+
+                // manda el request al brand del dispositivo
+                var devicesRealTimeInfo = await inverterBrand.GetRealTimeDeviceInfo(realtimeRequest);
+                try
+                {
+                    var inverter = Newtonsoft.Json.JsonConvert.DeserializeObject<DeviceFiveMinutesResponse<DeviceInverterDataItem>>(devicesRealTimeInfo.Data);
+
+                    inverterlist.AddRange(inverter.data);
+                }
+                catch (Exception ex)
+                {
+                    Thread.Sleep(300000);
+                    continue;
+                }
+            }
+
+            responseAlldevices.invertersList = inverterlist;
+
+            // genera el request para replicar los medidores
+            foreach (var device in metters.Batch(100).ToList())
+            {
+                var devIdsList = new List<string>();
+                foreach (var item in device)
+                {
+                    devIdsList.Add(item.deviceId.ToString());
+                }
+
+                var devIds = string.Join(",", devIdsList);
+                var realtimeRequest = new FiveMinutesRequest
+                {
+                    devIds = devIds,
+                    devTypeId = 17
+                };
+
+                // manda el request al brand del dispositivo
+                var devicesRealTimeInfo = await inverterBrand.GetRealTimeDeviceInfo(realtimeRequest);
+                try
+                {
+                    var metter = Newtonsoft.Json.JsonConvert.DeserializeObject<DeviceFiveMinutesResponse<DeviceMetterDataItem>>(devicesRealTimeInfo.Data);
+
+                    metterlist.AddRange(metter.data);
+                }
+                catch (Exception ex)
+                {
+                    Thread.Sleep(300000);
+                    continue;
+                }
+            }
+
+            responseAlldevices.metterList = metterlist;
+
+            return responseAlldevices;
+        }
+
         private async Task<PlantDeviceResult> GetPlantdeviceData(RequestModel request)
         {
             // obtiene los dispositivos de la planta consultada
-            var device = await this._repository.GetDeviceDataAsync(request.PlantCode);
+            var device = await this._repository.GetDeviceDataAsyncByCode(request.PlantCode);
 
             // genera la instancia de la marca correspondiente
             var inverterBrand = _inverterFactory.Create(request.Brand.ToLower());
@@ -170,7 +340,7 @@ namespace er_transformer_proxy_int.BussinesLogic
             string devIds = string.Empty;
             var deviceResult = new PlantDeviceResult();
             deviceResult.metterList = new List<DeviceDataResponse<DeviceMetterDataItem>>();
-            deviceResult.invertersList=new List<DeviceDataResponse<DeviceInverterDataItem>>();
+            deviceResult.invertersList = new List<DeviceDataResponse<DeviceInverterDataItem>>();
             // itera los tipos para extraer
             foreach (var group in groupedDevices)
             {
@@ -197,7 +367,19 @@ namespace er_transformer_proxy_int.BussinesLogic
 
                 // obtiene los datos del endpoint de tiempo real
                 var devicesRealTimeInfo = await inverterBrand.GetRealTimeDeviceInfo(realtimeRequest);
+
+                if (devicesRealTimeInfo.Data.ToUpper().Contains("ACCESS_FREQUENCY_IS_TOO_HIGH"))
+                {
+                    Thread.Sleep(300000);
+                    devicesRealTimeInfo = await inverterBrand.GetRealTimeDeviceInfo(realtimeRequest);
+                }
+
                 if (!devicesRealTimeInfo.Success || devicesRealTimeInfo.Data is null)
+                {
+                    continue;
+                }
+
+                if (devicesRealTimeInfo.ErrorMessage is not null && (devicesRealTimeInfo.Data.ToUpper().Contains("USER_MUST_RELOGIN") || devicesRealTimeInfo.Data.ToUpper().Contains("ACCESS_FREQUENCY_IS_TOO_HIGH")))
                 {
                     continue;
                 }
@@ -206,6 +388,7 @@ namespace er_transformer_proxy_int.BussinesLogic
                 if (devType == 1)
                 {
                     var inverter = JsonSerializer.Deserialize<DeviceFiveMinutesResponse<DeviceInverterDataItem>>(devicesRealTimeInfo.Data);
+
                     if (inverter is null)
                     {
                         continue;

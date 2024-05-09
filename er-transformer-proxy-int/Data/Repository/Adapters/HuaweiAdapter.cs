@@ -46,6 +46,7 @@
             // Enviar solicitud a la API de dispositivo
             var requestBody = JsonConvert.SerializeObject(request); // Usar JsonConvert en lugar de JsonSerializer
             var requestContent = new StringContent(requestBody, Encoding.UTF8, "application/json");
+
             var response = await _httpClient.PostAsync(apiUrl, requestContent);
 
             if (!response.IsSuccessStatusCode)

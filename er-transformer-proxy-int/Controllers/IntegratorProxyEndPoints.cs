@@ -25,6 +25,7 @@
             GetOverviewByPlant(routeBuilder);
             GetStationHealtCheck(routeBuilder);
             GetInstalledCapacity(routeBuilder);
+            ReplicateToMongoDb(routeBuilder);
         }
 
         private static void GetDeviceList(RouteGroupBuilder rgb)
@@ -46,7 +47,7 @@
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(ex.Message);
+                    return Results.BadRequest(ex);
                 }
             })
                 .Produces(200, typeof(DeviceData))
@@ -74,7 +75,7 @@
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(ex.Message);
+                    return Results.BadRequest(ex);
                 }
             })
                 .Produces(200, typeof(ResponseModel<List<CommonTileResponse>>))
@@ -102,7 +103,7 @@
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(ex.Message);
+                    return Results.BadRequest(ex);
                 }
             })
                 .Produces(200, typeof(ResponseModel<List<CommonTileResponse>>))
@@ -130,7 +131,7 @@
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(ex.Message);
+                    return Results.BadRequest(ex);
                 }
             })
                 .Produces(200, typeof(ResponseModel<List<CommonTileResponse>>))
@@ -156,13 +157,39 @@
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(ex.Message);
+                    return Results.BadRequest(ex);
                 }
             })
                 .Produces(200, typeof(ResponseModel<List<CommonTileResponse>>))
             .Produces(204)
             .WithTags("Proxy")
             .WithName("getInstalledCapacity")
+            .WithOpenApi();
+        }
+
+        private static void ReplicateToMongoDb(RouteGroupBuilder rgb)
+        {
+            rgb.MapPost("replicateToMongoDb", async (HttpContext context) =>
+            {
+                try
+                {
+                    var replicateResult = await bussineslogic.ReplicateToMongoDb();
+                    if (!replicateResult)
+                    {
+                        return Results.NoContent();
+                    }
+
+                    return Results.Ok(replicateResult);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex);
+                }
+            })
+                .Produces(200)
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("replicateToMongoDb")
             .WithOpenApi();
         }
     }
