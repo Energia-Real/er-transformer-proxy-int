@@ -65,7 +65,7 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
 
                 // Crear un filtro para la consulta
                 var filter = Builders<PlantDeviceResult>.Filter.And(
-                    Builders<PlantDeviceResult>.Filter.Eq("brandName", request.Brand),
+                    Builders<PlantDeviceResult>.Filter.Eq("brandName", request.Brand.ToLower()),
                     Builders<PlantDeviceResult>.Filter.Eq("stationCode", request.PlantCode)
                 );
 
