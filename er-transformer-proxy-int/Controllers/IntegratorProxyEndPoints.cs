@@ -25,7 +25,9 @@
             GetOverviewByPlant(routeBuilder);
             GetStationHealtCheck(routeBuilder);
             GetInstalledCapacity(routeBuilder);
+            GetMonthProyectResume(routeBuilder);
             ReplicateToMongoDb(routeBuilder);
+            ReplicateMonthProjectResumeToMongoDb(routeBuilder);
         }
 
         private static void GetDeviceList(RouteGroupBuilder rgb)
@@ -113,7 +115,7 @@
             .WithOpenApi();
         }
 
-        private static void GetStationHealtCheck(RouteGroupBuilder rgb) 
+        private static void GetStationHealtCheck(RouteGroupBuilder rgb)
         {
             rgb.MapPost("getStationHealtCheck", async (HttpContext context, [FromBody] RequestModel request) =>
             {
@@ -167,6 +169,32 @@
             .WithOpenApi();
         }
 
+        private static void GetMonthProyectResume(RouteGroupBuilder rgb)
+        {
+            rgb.MapPost("GetMonthProyectResume", async (HttpContext context, [FromBody] RequestModel? request) =>
+            {
+                try
+                {
+                    var resumeResult = await bussineslogic.GetMonthResume();
+                    if (!resumeResult.Any())
+                    {
+                        return Results.NoContent();
+                    }
+
+                    return Results.Ok(resumeResult);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex);
+                }
+            })
+            .Produces(200)
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("GetMonthProyectResume")
+            .WithOpenApi();
+        }
+
         private static void ReplicateToMongoDb(RouteGroupBuilder rgb)
         {
             rgb.MapPost("replicateToMongoDb", async (HttpContext context) =>
@@ -190,6 +218,32 @@
             .Produces(204)
             .WithTags("Proxy")
             .WithName("replicateToMongoDb")
+            .WithOpenApi();
+        }
+
+        private static void ReplicateMonthProjectResumeToMongoDb(RouteGroupBuilder rgb)
+        {
+            rgb.MapPost("ReplicateMonthProjectResumeToMongoDb", async (HttpContext context) =>
+            {
+                try
+                {
+                    var replicateResult = await bussineslogic.ReplicateMonthResumeToMongo();
+                    if (!replicateResult)
+                    {
+                        return Results.NoContent();
+                    }
+
+                    return Results.Ok(replicateResult);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex);
+                }
+            })
+                .Produces(200)
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("ReplicateMonthProjectResumeToMongoDb")
             .WithOpenApi();
         }
     }

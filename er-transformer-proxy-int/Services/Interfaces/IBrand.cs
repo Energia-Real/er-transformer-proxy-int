@@ -12,5 +12,7 @@ namespace er_transformer_proxy_int.Services.Interfaces
         Task<ResponseModel<string>> GetRealTimeDeviceInfo(FiveMinutesRequest request);
         
         Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(string request);
+
+        Task<ResponseModel<string>> GetMonthProjectResume(StationAndCollectTimeRequest request);
     }
 }

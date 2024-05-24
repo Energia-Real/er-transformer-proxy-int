@@ -11,5 +11,6 @@
         Task<ResponseModel<string>> GetRealTimeDeviceInfoAsync(FiveMinutesRequest request);
 
         Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(string stationCodes);
+        Task<ResponseModel<string>> GetMonthProjectResumeAsync(StationAndCollectTimeRequest request);
     }
 }

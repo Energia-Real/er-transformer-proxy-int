@@ -9,21 +9,16 @@ using er_transformer_proxy_int.Services.Interfaces;
 using System.Data;
 using System.Text.Json;
 using MoreLinq;
+using Amazon.Runtime.Internal.Transform;
+using System.Text;
 
 namespace er_transformer_proxy_int.BussinesLogic
 {
-    //2405067698
-    public class GigawattLogic : IGigawattLogic
+    public class GigawattLogic(IMongoRepository repository, IBrandFactory inverterFactory) : IGigawattLogic
     {
         private const double factorEnergia = .438;
-        private IMongoRepository _repository;
-        private readonly IBrandFactory _inverterFactory;
-
-        public GigawattLogic(IMongoRepository repository, IBrandFactory inverterFactory)
-        {
-            _inverterFactory = inverterFactory;
-            _repository = repository;
-        }
+        private IMongoRepository _repository = repository;
+        private readonly IBrandFactory _inverterFactory = inverterFactory;
 
         public async Task<ResponseModel<List<CommonTileResponse>>> GetSiteDetails(RequestModel request)
         {
@@ -184,6 +179,16 @@ namespace er_transformer_proxy_int.BussinesLogic
             return response;
         }
 
+        public async Task<PlantDeviceResult> GetPlantDeviceDataFromMongo(RequestModel request)
+        {
+            return await this._repository.GetRepliedDataAsync(request);
+        }
+
+        public async Task<List<MonthProjectResume>> GetMonthResume(RequestModel? request = null)
+        {
+            return await this._repository.GetMonthProjectResumesAsync(request);
+        }
+
         public async Task<bool> ReplicateToMongoDb()
         {
             // obtiene de mongo todas las plantas y sus dispositivos
@@ -220,7 +225,7 @@ namespace er_transformer_proxy_int.BussinesLogic
 
                         if (metter is not null)
                         {
-                            insertIntoMongo.metterList.Add(metter); 
+                            insertIntoMongo.metterList.Add(metter);
                         }
                     }
                 }
@@ -231,11 +236,86 @@ namespace er_transformer_proxy_int.BussinesLogic
             return true;
         }
 
-        public async Task<PlantDeviceResult> GetPlantDeviceDataFromMongo(RequestModel request)
+        public async Task<bool> ReplicateMonthResumeToMongo()
         {
-            return await this._repository.GetRepliedDataAsync(request);
-        }
+            // obtiene de mongo todas las plantas
+            var projects = await this._repository.GetPlantListAsync();
+            if (projects is null || !projects.Any())
+            {
+                return false;
+            }
 
+            DateTime now = DateTime.UtcNow;
+
+            // Calculate the Unix epoch time in milliseconds
+            long collectTime = new DateTimeOffset(now).ToUnixTimeMilliseconds();
+
+            StringBuilder projectListBuilder = new StringBuilder();
+
+            foreach (var project in projects)
+            {
+                projectListBuilder.Append(project.PlantCode).Append(",");
+            }
+
+            // Remove the last comma if the StringBuilder is not empty
+            if (projectListBuilder.Length > 0)
+            {
+                projectListBuilder.Length--; // Reduce the length by one to remove the last comma
+            }
+
+            var projectList = projectListBuilder.ToString();
+
+            var request = new StationAndCollectTimeRequest();
+
+            request.stationCodes = projectList;
+            request.collectTime = collectTime.ToString();
+
+            // genera la instancia de la marca correspondiente
+            var inverterBrand = _inverterFactory.Create("huawei");
+
+            var response = await inverterBrand.GetMonthProjectResume(request);
+            var monthResumeList = new List<DeviceDataResponse<MonthResumeResponse>>();
+            try
+            {
+                var monthResume = Newtonsoft.Json.JsonConvert.DeserializeObject<DeviceFiveMinutesResponse<MonthResumeResponse>>(response.Data);
+
+                monthResumeList.AddRange(monthResume.data);
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+
+            var resumeList = new List<DeviceDataResponse<MonthResumeResponse>>();
+            var groupbyCode = monthResumeList.GroupBy(a => a.stationCode).ToList();
+
+            foreach (var station in groupbyCode)
+            {
+                var ListResume = new List<MonthResumeResponse>();
+
+                var groupResume = station.Select(a => a.dataItemMap).ToList();
+
+                ListResume.AddRange(groupResume);
+                if (!ListResume.Any())
+                {
+                    continue;
+                }
+
+                // mapeo de MonthResumeResponse a MonthProjectResume
+                var resumetoInsert = new MonthProjectResume
+                {
+                    brandName = "huawei",
+                    Monthresume = ListResume,
+                    stationCode = station.FirstOrDefault().stationCode
+                };
+
+                await this._repository.InsertMonthResumeDataAsync(resumetoInsert);
+            }
+
+
+            return true;
+        }
 
         private async Task<PlantDeviceResult> ReplicateAlldeviceData(List<Device> devices)
         {

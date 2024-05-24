@@ -1,1 +1,0 @@
-﻿// espacio para generar la logica necesaria para colocar el replicador a mongo DB

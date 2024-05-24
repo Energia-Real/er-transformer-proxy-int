@@ -14,8 +14,11 @@ namespace er_transformer_proxy_int.BussinesLogic
         Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(RequestModel request);
         Task<ResponseModel<List<CommonTileResponse>>> GetStationCapacity(RequestModel request);
 
-        Task<bool> ReplicateToMongoDb();
+        Task<List<MonthProjectResume>> GetMonthResume(RequestModel? request = null);
 
         Task<PlantDeviceResult> GetPlantDeviceDataFromMongo(RequestModel request);
+
+        Task<bool> ReplicateToMongoDb();
+        Task<bool> ReplicateMonthResumeToMongo();
     }
 }
