@@ -166,7 +166,7 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
                 var filter = requestModel == null
                     ? Builders<MonthProjectResume>.Filter.Empty
                     : Builders<MonthProjectResume>.Filter.And(
-                        Builders<MonthProjectResume>.Filter.Eq(x => x.brandName, requestModel.Brand),
+                        Builders<MonthProjectResume>.Filter.Eq(x => x.brandName, requestModel.Brand.ToLower()),
                         Builders<MonthProjectResume>.Filter.Eq(x => x.stationCode, requestModel.PlantCode));
 
                 // Obtener los registros de la colección según el filtro

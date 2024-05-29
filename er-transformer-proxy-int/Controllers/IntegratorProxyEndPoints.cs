@@ -175,7 +175,7 @@
             {
                 try
                 {
-                    var resumeResult = await bussineslogic.GetMonthResume();
+                    var resumeResult = await bussineslogic.GetMonthResume(request);
                     if (!resumeResult.Any())
                     {
                         return Results.NoContent();

@@ -184,7 +184,7 @@ namespace er_transformer_proxy_int.BussinesLogic
             return await this._repository.GetRepliedDataAsync(request);
         }
 
-        public async Task<List<MonthProjectResume>> GetMonthResume(RequestModel? request = null)
+        public async Task<List<MonthProjectResume>> GetMonthResume(RequestModel? request)
         {
             return await this._repository.GetMonthProjectResumesAsync(request);
         }
