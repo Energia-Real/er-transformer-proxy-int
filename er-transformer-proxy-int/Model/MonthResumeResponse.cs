@@ -4,6 +4,8 @@
 
     public class MonthResumeResponse
     {
+        public DateTime CollectTime { get; set; }
+
         [JsonProperty("installed_capacity")]
         public double InstalledCapacity { get; set; }
 

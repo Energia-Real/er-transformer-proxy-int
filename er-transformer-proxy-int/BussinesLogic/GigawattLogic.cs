@@ -273,12 +273,15 @@ namespace er_transformer_proxy_int.BussinesLogic
             // genera la instancia de la marca correspondiente
             var inverterBrand = _inverterFactory.Create("huawei");
 
+            // replica los datos del endpoint de la marca correspondiente
             var response = await inverterBrand.GetMonthProjectResume(request);
             var monthResumeList = new List<DeviceDataResponse<MonthResumeResponse>>();
             try
             {
+                // deserealiza de Json a objecto
                 var monthResume = Newtonsoft.Json.JsonConvert.DeserializeObject<DeviceFiveMinutesResponse<MonthResumeResponse>>(response.Data);
 
+                // los agrega a la lista que vamos a manipular
                 monthResumeList.AddRange(monthResume.data);
             }
             catch (Exception ex)
@@ -286,15 +289,32 @@ namespace er_transformer_proxy_int.BussinesLogic
                 return false;
             }
 
-
             var resumeList = new List<DeviceDataResponse<MonthResumeResponse>>();
+
+            // los agrupa por Codigo de planta o stationCode
             var groupbyCode = monthResumeList.GroupBy(a => a.stationCode).ToList();
 
+            // elimina todos los registros previos de la collection en mongo
+            await this._repository.DeleteManyFromCollection("RepliMonthProjectResume");
             foreach (var station in groupbyCode)
             {
                 var ListResume = new List<MonthResumeResponse>();
 
-                var groupResume = station.Select(a => a.dataItemMap).ToList();
+                // genera el nuevo objeto que vamos a inyectar en la collection
+                var groupResume = station.Select(a => new MonthResumeResponse
+                {
+                    CollectTime = DateTimeOffset.FromUnixTimeMilliseconds(a.collectTime ?? 0).DateTime,
+                    BuyPower = a.dataItemMap.BuyPower,
+                    InstalledCapacity = a.dataItemMap.InstalledCapacity,
+                    InverterPower = a.dataItemMap.InverterPower,
+                    OnGridPower = a.dataItemMap.OnGridPower,
+                    PerPowerRatio = a.dataItemMap.PerPowerRatio,
+                    ReductionTotalCo2 = a.dataItemMap.ReductionTotalCo2,
+                    ReductionTotalCoal = a.dataItemMap.ReductionTotalCoal,
+                    SelfProvide = a.dataItemMap.SelfProvide,
+                    SelfUsePower = a.dataItemMap.SelfUsePower,
+                    UsePower = a.dataItemMap.UsePower,
+                }).ToList();
 
                 ListResume.AddRange(groupResume);
                 if (!ListResume.Any())
@@ -310,9 +330,9 @@ namespace er_transformer_proxy_int.BussinesLogic
                     stationCode = station.FirstOrDefault().stationCode
                 };
 
+                // inserta en mongo
                 await this._repository.InsertMonthResumeDataAsync(resumetoInsert);
             }
-
 
             return true;
         }

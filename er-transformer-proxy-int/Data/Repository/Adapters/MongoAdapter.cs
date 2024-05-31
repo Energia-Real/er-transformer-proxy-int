@@ -154,25 +154,46 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
                 // Verificar si el índice existe en el campo PlantCode
                 var indexKeysDefinition = Builders<MonthProjectResume>.IndexKeys.Ascending(x => x.stationCode);
                 var indexModel = new CreateIndexModel<MonthProjectResume>(indexKeysDefinition);
-                var indexExists = await collection.Indexes.CreateOneAsync(indexModel);
-
-                // Si el índice no existe, crearlo
-                if (string.IsNullOrEmpty(indexExists))
-                {
-                    await collection.Indexes.CreateOneAsync(indexModel);
-                }
+                await collection.Indexes.CreateOneAsync(indexModel); // No es necesario verificar si el índice existe
 
                 // Construir el filtro según el requestModel
-                var filter = requestModel == null
-                    ? Builders<MonthProjectResume>.Filter.Empty
-                    : Builders<MonthProjectResume>.Filter.And(
-                        Builders<MonthProjectResume>.Filter.Eq(x => x.brandName, requestModel.Brand.ToLower()),
-                        Builders<MonthProjectResume>.Filter.Eq(x => x.stationCode, requestModel.PlantCode));
+                var filters = new List<FilterDefinition<MonthProjectResume>>();
+
+                if (requestModel != null)
+                {
+                    if (!string.IsNullOrEmpty(requestModel.Brand))
+                    {
+                        filters.Add(Builders<MonthProjectResume>.Filter.Eq(x => x.brandName, requestModel.Brand.ToLower()));
+                    }
+
+                    if (!string.IsNullOrEmpty(requestModel.PlantCode))
+                    {
+                        filters.Add(Builders<MonthProjectResume>.Filter.Eq(x => x.stationCode, requestModel.PlantCode));
+                    }
+                }
+
+                var filter = filters.Count > 0
+                    ? Builders<MonthProjectResume>.Filter.And(filters)
+                    : Builders<MonthProjectResume>.Filter.Empty;
 
                 // Obtener los registros de la colección según el filtro
-                var resultado = await collection.Find(filter).ToListAsync();
+                var resultados = await collection.Find(filter).ToListAsync();
 
-                return resultado;
+                // Filtrar en memoria por el intervalo de fechas en los subdocumentos Monthresume
+                if (requestModel != null && requestModel.StartDate != DateTime.MinValue && requestModel.EndDate != DateTime.MinValue)
+                {
+                    foreach (var resultado in resultados)
+                    {
+                        resultado.Monthresume = resultado.Monthresume
+                            .Where(m => m.CollectTime >= requestModel.StartDate && m.CollectTime <= requestModel.EndDate)
+                            .ToList();
+                    }
+
+                    // Filtrar los resultados que no tengan subdocumentos Monthresume dentro del rango de fechas
+                    resultados = resultados.Where(r => r.Monthresume.Any()).ToList();
+                }
+
+                return resultados;
             }
             catch (Exception ex)
             {
@@ -204,14 +225,26 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
             {
                 var collection = _database.GetCollection<MonthProjectResume>("RepliMonthProjectResume");
 
-                // Delete all existing records in the collection
-                await collection.DeleteManyAsync(Builders<MonthProjectResume>.Filter.Empty);
-
                 // Set the repliedDateTime to the current time
                 resume.repliedDateTime = DateTime.Now;
 
                 // Insert the new record into the collection
                 await collection.InsertOneAsync(resume);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al insertar en la base de datos: {ex.Message}");
+            }
+        }
+
+        public async Task DeleteManyFromCollection(string collectionName)
+        {
+            try
+            {
+                var collection = _database.GetCollection<MonthProjectResume>(collectionName);
+
+                // Delete all existing records in the collection
+                await collection.DeleteManyAsync(Builders<MonthProjectResume>.Filter.Empty);
             }
             catch (Exception ex)
             {

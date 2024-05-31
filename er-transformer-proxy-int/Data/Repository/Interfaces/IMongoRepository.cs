@@ -15,5 +15,7 @@ namespace er_transformer_proxy_int.Data.Repository.Interfaces
 
         Task InsertDeviceDataAsync(PlantDeviceResult device);
         Task InsertMonthResumeDataAsync(MonthProjectResume resume);
+
+        Task DeleteManyFromCollection(string collectionName);
     }
 }
