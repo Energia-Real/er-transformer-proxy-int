@@ -1,7 +1,6 @@
 ﻿namespace er_transformer_proxy_int.Model
 {
     using Newtonsoft.Json;
-
     public class MonthResumeResponse
     {
         public DateTime CollectTime { get; set; }
@@ -35,5 +34,8 @@
 
         [JsonProperty("perpower_ratio")]
         public double? PerPowerRatio { get; set; }
+
+        [JsonProperty("dataRecovery")]
+        public double? DataRecovery { get; set; }
     }
 }

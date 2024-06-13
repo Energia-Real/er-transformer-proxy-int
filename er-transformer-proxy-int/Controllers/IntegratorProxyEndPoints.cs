@@ -28,6 +28,8 @@
             GetMonthProyectResume(routeBuilder);
             ReplicateToMongoDb(routeBuilder);
             ReplicateMonthProjectResumeToMongoDb(routeBuilder);
+            ReplicateDayProjectResumeToMongoDb(routeBuilder);
+            ReplicateHourProjectResumeToMongoDb(routeBuilder);
         }
 
         private static void GetDeviceList(RouteGroupBuilder rgb)
@@ -244,6 +246,58 @@
             .Produces(204)
             .WithTags("Proxy")
             .WithName("ReplicateMonthProjectResumeToMongoDb")
+            .WithOpenApi();
+        }
+
+        private static void ReplicateDayProjectResumeToMongoDb(RouteGroupBuilder rgb)
+        {
+            rgb.MapPost("ReplicateDayProjectResumeToMongoDb", async (HttpContext context) =>
+            {
+                try
+                {
+                    var replicateResult = await bussineslogic.ReplicateDailyResumeToMongo();
+                    if (!replicateResult)
+                    {
+                        return Results.NoContent();
+                    }
+
+                    return Results.Ok(replicateResult);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex);
+                }
+            })
+                .Produces(200)
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("ReplicateDayProjectResumeToMongoDb")
+            .WithOpenApi();
+        }
+
+        private static void ReplicateHourProjectResumeToMongoDb(RouteGroupBuilder rgb)
+        {
+            rgb.MapPost("ReplicateHourProjectResumeToMongoDb", async (HttpContext context) =>
+            {
+                try
+                {
+                    var replicateResult = await bussineslogic.ReplicateHourlyResumeToMongo();
+                    if (!replicateResult)
+                    {
+                        return Results.NoContent();
+                    }
+
+                    return Results.Ok(replicateResult);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex);
+                }
+            })
+                .Produces(200)
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("ReplicateHourProjectResumeToMongoDb")
             .WithOpenApi();
         }
     }

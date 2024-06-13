@@ -14,5 +14,7 @@ namespace er_transformer_proxy_int.Services.Interfaces
         Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(string request);
 
         Task<ResponseModel<string>> GetMonthProjectResume(StationAndCollectTimeRequest request);
+        Task<ResponseModel<string>> GetDailyProjectResume(StationAndCollectTimeRequest request);
+        Task<ResponseModel<string>> GetHourlyProjectResume(StationAndCollectTimeRequest request);
     }
 }

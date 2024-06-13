@@ -55,5 +55,19 @@ namespace er_transformer_proxy_int.Services
 
             return new ResponseModel<string> { ErrorMessage = response.ErrorMessage, Success = response.Success, Data = response.Data };
         }
+
+        public async Task<ResponseModel<string>> GetHourlyProjectResume(StationAndCollectTimeRequest request)
+        {
+            var response = await _repository.GetHourlyProjectResumeAsync(request);
+
+            return new ResponseModel<string> { ErrorMessage = response.ErrorMessage, Success = response.Success, Data = response.Data };
+        }
+
+        public async Task<ResponseModel<string>> GetDailyProjectResume(StationAndCollectTimeRequest request)
+        {
+            var response = await _repository.GetDailyProjectResumeAsync(request);
+
+            return new ResponseModel<string> { ErrorMessage = response.ErrorMessage, Success = response.Success, Data = response.Data };
+        }
     }
 }

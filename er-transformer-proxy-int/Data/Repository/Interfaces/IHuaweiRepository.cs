@@ -12,5 +12,7 @@
 
         Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(string stationCodes);
         Task<ResponseModel<string>> GetMonthProjectResumeAsync(StationAndCollectTimeRequest request);
+        Task<ResponseModel<string>> GetDailyProjectResumeAsync(StationAndCollectTimeRequest request);
+        Task<ResponseModel<string>> GetHourlyProjectResumeAsync(StationAndCollectTimeRequest request);
     }
 }

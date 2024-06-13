@@ -237,6 +237,36 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
             }
         }
 
+        public async Task InsertHourResumeDataAsync(HourProjectResume resume)
+        {
+            try
+            {
+                var collection = _database.GetCollection<HourProjectResume>("RepliHourProjectResume");
+
+                // Insert the new record into the collection
+                await collection.InsertOneAsync(resume);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al insertar en la base de datos: {ex.Message}");
+            }
+        }
+
+        public async Task InsertDayResumeDataAsync(DayProjectResume resume)
+        {
+            try
+            {
+                var collection = _database.GetCollection<DayProjectResume>("RepliDayProjectResume");
+
+                // Insert the new record into the collection
+                await collection.InsertOneAsync(resume);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al insertar en la base de datos: {ex.Message}");
+            }
+        }
+
         public async Task DeleteManyFromCollection(string collectionName)
         {
             try
@@ -249,6 +279,26 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
             catch (Exception ex)
             {
                 Console.WriteLine($"Error al insertar en la base de datos: {ex.Message}");
+            }
+        }
+
+        public async Task DeleteManyFromCollectionByDate(string collectionName, DateTime date)
+        {
+            try
+            {
+                var collection = _database.GetCollection<HourProjectResume>(collectionName);
+
+                // Crear un filtro para eliminar documentos por fecha
+                var filter = Builders<HourProjectResume>.Filter.Eq(doc => doc.repliedDateTime, date.Date);
+
+                // Eliminar los documentos que coincidan con el filtro
+                var result = await collection.DeleteManyAsync(filter);
+
+                Console.WriteLine($"Se eliminaron {result.DeletedCount} documentos.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al eliminar de la base de datos: {ex.Message}");
             }
         }
     }

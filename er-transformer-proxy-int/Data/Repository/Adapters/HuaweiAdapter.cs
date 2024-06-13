@@ -84,6 +84,52 @@
             return responseData;
         }
 
+        public async Task<ResponseModel<string>> GetHourlyProjectResumeAsync(StationAndCollectTimeRequest request)
+        {
+            var api = _configuration["APIs:HuaweiApi"];
+            var apiUrl = $"{api}GetHourResume";
+
+            // Enviar solicitud a la API de dispositivo
+            var requestBody = JsonConvert.SerializeObject(request); // Usar JsonConvert en lugar de JsonSerializer
+            var requestContent = new StringContent(requestBody, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(apiUrl, requestContent);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new ResponseModel<string> { Success = false, ErrorCode = (int)response.StatusCode, ErrorMessage = response.ReasonPhrase };
+            }
+
+            // Procesar la respuesta de la API de dispositivo
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var responseData = JsonConvert.DeserializeObject<ResponseModel<string>>(responseContent); // Corrección en la deserialización
+
+            return responseData;
+        }
+
+        public async Task<ResponseModel<string>> GetDailyProjectResumeAsync(StationAndCollectTimeRequest request)
+        {
+            var api = _configuration["APIs:HuaweiApi"];
+            var apiUrl = $"{api}GetDailyResume";
+
+            // Enviar solicitud a la API de dispositivo
+            var requestBody = JsonConvert.SerializeObject(request); // Usar JsonConvert en lugar de JsonSerializer
+            var requestContent = new StringContent(requestBody, Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync(apiUrl, requestContent);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new ResponseModel<string> { Success = false, ErrorCode = (int)response.StatusCode, ErrorMessage = response.ReasonPhrase };
+            }
+
+            // Procesar la respuesta de la API de dispositivo
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var responseData = JsonConvert.DeserializeObject<ResponseModel<string>>(responseContent); // Corrección en la deserialización
+
+            return responseData;
+        }
+
         public async Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(string stationCodes)
         {
             var responsemethod = new ResponseModel<HealtCheckModel> { Success = false, ErrorCode = -1, ErrorMessage = "No content" };
