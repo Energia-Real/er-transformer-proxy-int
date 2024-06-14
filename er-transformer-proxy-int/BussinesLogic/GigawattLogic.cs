@@ -386,7 +386,7 @@ namespace er_transformer_proxy_int.BussinesLogic
                     {
                         brandName = "huawei",
                         HourResume = ListResume,
-                        repliedDateTime = DateTime.Now.AddDays(-i),
+                        repliedDateTime = DateTime.Now,
                         stationCode = station.FirstOrDefault().stationCode
                     };
 
@@ -402,7 +402,7 @@ namespace er_transformer_proxy_int.BussinesLogic
             var projectList = await GetProjectList();
            
             start:
-                DateTime now = DateTime.UtcNow.AddDays(-i);
+                DateTime now = DateTime.UtcNow;
 
                 // Calculate the Unix epoch time in milliseconds
                 long collectTime = new DateTimeOffset(now).ToUnixTimeMilliseconds();
