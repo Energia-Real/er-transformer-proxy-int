@@ -13,9 +13,8 @@ builder.Services.AddCors(options => options.AddPolicy("AllowOrigin", builder =>
     .AllowAnyMethod()
     .AllowAnyHeader()
     .WithOrigins("http://localhost:9000",
-    "https://localhost:9000",
-                "https://er-portal.azurewebsites.net",
-                    "https://portal.energiareal.mx")
+                            "https://er-portal.azurewebsites.net",
+                                "https://portal.energiareal.mx")
     .AllowCredentials();
 }));
 
