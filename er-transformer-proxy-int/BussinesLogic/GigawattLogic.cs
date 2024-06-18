@@ -186,7 +186,13 @@ namespace er_transformer_proxy_int.BussinesLogic
 
         public async Task<List<MonthProjectResume>> GetMonthResume(RequestModel? request)
         {
-            return await this._repository.GetMonthProjectResumesAsync(request);
+            var response = await this._repository.GetMonthProjectResumesAsync(request);
+            foreach (var item in response)
+            {
+                item.Monthresume.ForEach(a => { a.InverterPower = a.InverterPower / 1000; a.DataRecovery = a.DataRecovery == 0 ? 0 : a.DataRecovery - a.InverterPower; });
+            }
+
+            return response;
         }
 
         public async Task<bool> ReplicateToMongoDb()
@@ -318,81 +324,81 @@ namespace er_transformer_proxy_int.BussinesLogic
         public async Task<bool> ReplicateHourlyResumeToMongo()
         {
             var projectList = await GetProjectList();
-           
-            start:
-                DateTime now = DateTime.UtcNow;
 
-                // Calculate the Unix epoch time in milliseconds
-                long collectTime = new DateTimeOffset(now).ToUnixTimeMilliseconds();
+        start:
+            DateTime now = DateTime.UtcNow;
 
-                var request = new StationAndCollectTimeRequest();
+            // Calculate the Unix epoch time in milliseconds
+            long collectTime = new DateTimeOffset(now).ToUnixTimeMilliseconds();
 
-                request.stationCodes = projectList;
-                request.collectTime = collectTime.ToString();
+            var request = new StationAndCollectTimeRequest();
 
-                // genera la instancia de la marca correspondiente
-                var inverterBrand = _inverterFactory.Create("huawei");
+            request.stationCodes = projectList;
+            request.collectTime = collectTime.ToString();
 
-                // replica los datos del endpoint de la marca correspondiente
-                var response = await inverterBrand.GetHourlyProjectResume(request);
-                var hourresumeList = new List<DeviceDataResponse<HourResumeResponse>>();
-                try
+            // genera la instancia de la marca correspondiente
+            var inverterBrand = _inverterFactory.Create("huawei");
+
+            // replica los datos del endpoint de la marca correspondiente
+            var response = await inverterBrand.GetHourlyProjectResume(request);
+            var hourresumeList = new List<DeviceDataResponse<HourResumeResponse>>();
+            try
+            {
+                // deserealiza de Json a objecto
+                var hourResume = Newtonsoft.Json.JsonConvert.DeserializeObject<DeviceFiveMinutesResponse<HourResumeResponse>>(response.Data);
+
+                // los agrega a la lista que vamos a manipular
+                hourresumeList.AddRange(hourResume.data);
+            }
+            catch (Exception ex)
+            {
+                Thread.Sleep(TimeSpan.FromMinutes(5));
+                goto start;
+                //return false;
+            }
+
+            // los agrupa por Codigo de planta o stationCode
+            var groupbyCode = hourresumeList.GroupBy(a => a.stationCode).ToList();
+
+            // TODO; validar si se debe de eliminar la informacion previa y en que rango de horas
+            await this._repository.DeleteManyFromCollectionByDate("RepliHourProjectResume", now);
+            foreach (var station in groupbyCode)
+            {
+                var ListResume = new List<HourResumeResponse>();
+
+                var groupResume = station.Select(a => new HourResumeResponse
                 {
-                    // deserealiza de Json a objecto
-                    var hourResume = Newtonsoft.Json.JsonConvert.DeserializeObject<DeviceFiveMinutesResponse<HourResumeResponse>>(response.Data);
+                    CollectTime = DateTimeOffset.FromUnixTimeMilliseconds(a.collectTime ?? 0).DateTime,
+                    DischargeCap = a.dataItemMap.DischargeCap,
+                    RadiationIntensity = a.dataItemMap.RadiationIntensity,
+                    InverterPower = a.dataItemMap.InverterPower,
+                    InverterYield = a.dataItemMap.InverterYield,
+                    PowerProfit = a.dataItemMap.PowerProfit,
+                    TheoryPower = a.dataItemMap.TheoryPower,
+                    PVYield = a.dataItemMap.PVYield,
+                    OnGridPower = a.dataItemMap.OnGridPower,
+                    ChargeCap = a.dataItemMap.ChargeCap,
+                    SelfProvide = a.dataItemMap.SelfProvide
+                }).ToList();
 
-                    // los agrega a la lista que vamos a manipular
-                    hourresumeList.AddRange(hourResume.data);
-                }
-                catch (Exception ex)
+                ListResume.AddRange(groupResume);
+                if (!ListResume.Any())
                 {
-                    Thread.Sleep(TimeSpan.FromMinutes(5));
-                    goto start;
-                    //return false;
+                    continue;
                 }
 
-                // los agrupa por Codigo de planta o stationCode
-                var groupbyCode = hourresumeList.GroupBy(a => a.stationCode).ToList();
-
-                // TODO; validar si se debe de eliminar la informacion previa y en que rango de horas
-                await this._repository.DeleteManyFromCollectionByDate("RepliHourProjectResume", now);
-                foreach (var station in groupbyCode)
+                // mapeo de MonthResumeResponse a MonthProjectResume
+                var resumetoInsert = new HourProjectResume
                 {
-                    var ListResume = new List<HourResumeResponse>();
+                    brandName = "huawei",
+                    HourResume = ListResume,
+                    repliedDateTime = DateTime.Now,
+                    stationCode = station.FirstOrDefault().stationCode
+                };
 
-                    var groupResume = station.Select(a => new HourResumeResponse
-                    {
-                        CollectTime = DateTimeOffset.FromUnixTimeMilliseconds(a.collectTime ?? 0).DateTime,
-                        DischargeCap = a.dataItemMap.DischargeCap,
-                        RadiationIntensity = a.dataItemMap.RadiationIntensity,
-                        InverterPower = a.dataItemMap.InverterPower,
-                        InverterYield = a.dataItemMap.InverterYield,
-                        PowerProfit = a.dataItemMap.PowerProfit,
-                        TheoryPower = a.dataItemMap.TheoryPower,
-                        PVYield = a.dataItemMap.PVYield,
-                        OnGridPower = a.dataItemMap.OnGridPower,
-                        ChargeCap = a.dataItemMap.ChargeCap,
-                        SelfProvide = a.dataItemMap.SelfProvide
-                    }).ToList();
-
-                    ListResume.AddRange(groupResume);
-                    if (!ListResume.Any())
-                    {
-                        continue;
-                    }
-
-                    // mapeo de MonthResumeResponse a MonthProjectResume
-                    var resumetoInsert = new HourProjectResume
-                    {
-                        brandName = "huawei",
-                        HourResume = ListResume,
-                        repliedDateTime = DateTime.Now,
-                        stationCode = station.FirstOrDefault().stationCode
-                    };
-
-                    // inserta en mongo
-                    await this._repository.InsertHourResumeDataAsync(resumetoInsert);
-                }
+                // inserta en mongo
+                await this._repository.InsertHourResumeDataAsync(resumetoInsert);
+            }
 
             return true;
         }
@@ -400,85 +406,85 @@ namespace er_transformer_proxy_int.BussinesLogic
         public async Task<bool> ReplicateDailyResumeToMongo()
         {
             var projectList = await GetProjectList();
-           
-            start:
-                DateTime now = DateTime.UtcNow;
 
-                // Calculate the Unix epoch time in milliseconds
-                long collectTime = new DateTimeOffset(now).ToUnixTimeMilliseconds();
+        start:
+            DateTime now = DateTime.UtcNow;
 
-                var request = new StationAndCollectTimeRequest();
+            // Calculate the Unix epoch time in milliseconds
+            long collectTime = new DateTimeOffset(now).ToUnixTimeMilliseconds();
 
-                request.stationCodes = projectList;
-                request.collectTime = collectTime.ToString();
+            var request = new StationAndCollectTimeRequest();
 
-                // genera la instancia de la marca correspondiente
-                var inverterBrand = _inverterFactory.Create("huawei");
+            request.stationCodes = projectList;
+            request.collectTime = collectTime.ToString();
 
-                // replica los datos del endpoint de la marca correspondiente
-                var response = await inverterBrand.GetDailyProjectResume(request);
-                var dayResumeList = new List<DeviceDataResponse<DayResumeResponse>>();
-                try
+            // genera la instancia de la marca correspondiente
+            var inverterBrand = _inverterFactory.Create("huawei");
+
+            // replica los datos del endpoint de la marca correspondiente
+            var response = await inverterBrand.GetDailyProjectResume(request);
+            var dayResumeList = new List<DeviceDataResponse<DayResumeResponse>>();
+            try
+            {
+                // deserealiza de Json a objecto
+                var dayResume = Newtonsoft.Json.JsonConvert.DeserializeObject<DeviceFiveMinutesResponse<DayResumeResponse>>(response.Data);
+
+                // los agrega a la lista que vamos a manipular
+                dayResumeList.AddRange(dayResume.data);
+            }
+            catch (Exception ex)
+            {
+                Thread.Sleep(TimeSpan.FromMinutes(15));
+                goto start;
+            }
+
+            // los agrupa por Codigo de planta o stationCode
+            var groupbyCode = dayResumeList.GroupBy(a => a.stationCode).ToList();
+
+            // TODO; validar si se debe de eliminar la informacion previa y en que rango de horas
+            foreach (var station in groupbyCode)
+            {
+                var ListResume = new List<DayResumeResponse>();
+
+                // Genera el nuevo objeto que vamos a inyectar en la colección
+                var groupResume = station.Select(a => new DayResumeResponse
                 {
-                    // deserealiza de Json a objecto
-                    var dayResume = Newtonsoft.Json.JsonConvert.DeserializeObject<DeviceFiveMinutesResponse<DayResumeResponse>>(response.Data);
+                    CollectTime = DateTimeOffset.FromUnixTimeMilliseconds(a.collectTime ?? 0).DateTime,
+                    InverterPower = a.dataItemMap.InverterPower,
+                    InverterYield = a.dataItemMap.InverterYield,
+                    SelfUsePower = a.dataItemMap.SelfUsePower,
+                    TheoryPower = a.dataItemMap.TheoryPower,
+                    PVYield = a.dataItemMap.PVYield,
+                    PerPowerRatio = a.dataItemMap.PerPowerRatio,
+                    ReductionTotalCo2 = a.dataItemMap.ReductionTotalCo2,
+                    PerformanceRatio = a.dataItemMap.PerformanceRatio,
+                    SelfProvide = a.dataItemMap.SelfProvide,
+                    RadiationIntensity = a.dataItemMap.RadiationIntensity,
+                    InstalledCapacity = a.dataItemMap.InstalledCapacity,
+                    UsePower = a.dataItemMap.UsePower,
+                    ReductionTotalCoal = a.dataItemMap.ReductionTotalCoal,
+                    OnGridPower = a.dataItemMap.OnGridPower,
+                    BuyPower = a.dataItemMap.BuyPower
+                }).ToList();
 
-                    // los agrega a la lista que vamos a manipular
-                    dayResumeList.AddRange(dayResume.data);
-                }
-                catch (Exception ex)
+                ListResume.AddRange(groupResume);
+                if (!ListResume.Any())
                 {
-                    Thread.Sleep(TimeSpan.FromMinutes(15));
-                    goto start;
+                    continue;
                 }
 
-                // los agrupa por Codigo de planta o stationCode
-                var groupbyCode = dayResumeList.GroupBy(a => a.stationCode).ToList();
-
-                // TODO; validar si se debe de eliminar la informacion previa y en que rango de horas
-                foreach (var station in groupbyCode)
+                // mapeo de MonthResumeResponse a MonthProjectResume
+                var resumetoInsert = new DayProjectResume
                 {
-                    var ListResume = new List<DayResumeResponse>();
+                    brandName = "huawei",
+                    DayResume = ListResume,
+                    repliedDateTime = now,
+                    stationCode = station.FirstOrDefault().stationCode
+                };
 
-                    // Genera el nuevo objeto que vamos a inyectar en la colección
-                    var groupResume = station.Select(a => new DayResumeResponse
-                    {
-                        CollectTime = DateTimeOffset.FromUnixTimeMilliseconds(a.collectTime ?? 0).DateTime,
-                        InverterPower = a.dataItemMap.InverterPower,
-                        InverterYield = a.dataItemMap.InverterYield,
-                        SelfUsePower = a.dataItemMap.SelfUsePower,
-                        TheoryPower = a.dataItemMap.TheoryPower,
-                        PVYield = a.dataItemMap.PVYield,
-                        PerPowerRatio = a.dataItemMap.PerPowerRatio,
-                        ReductionTotalCo2 = a.dataItemMap.ReductionTotalCo2,
-                        PerformanceRatio = a.dataItemMap.PerformanceRatio,
-                        SelfProvide = a.dataItemMap.SelfProvide,
-                        RadiationIntensity = a.dataItemMap.RadiationIntensity,
-                        InstalledCapacity = a.dataItemMap.InstalledCapacity,
-                        UsePower = a.dataItemMap.UsePower,
-                        ReductionTotalCoal = a.dataItemMap.ReductionTotalCoal,
-                        OnGridPower = a.dataItemMap.OnGridPower,
-                        BuyPower = a.dataItemMap.BuyPower
-                    }).ToList();
-
-                    ListResume.AddRange(groupResume);
-                    if (!ListResume.Any())
-                    {
-                        continue;
-                    }
-
-                    // mapeo de MonthResumeResponse a MonthProjectResume
-                    var resumetoInsert = new DayProjectResume
-                    {
-                        brandName = "huawei",
-                        DayResume = ListResume,
-                        repliedDateTime= now,
-                        stationCode = station.FirstOrDefault().stationCode
-                    };
-
-                    // inserta en mongo
-                    await this._repository.InsertDayResumeDataAsync(resumetoInsert);
-                }
+                // inserta en mongo
+                await this._repository.InsertDayResumeDataAsync(resumetoInsert);
+            }
 
             return true;
         }
