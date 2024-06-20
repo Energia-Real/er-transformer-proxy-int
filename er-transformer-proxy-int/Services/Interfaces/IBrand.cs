@@ -10,8 +10,8 @@ namespace er_transformer_proxy_int.Services.Interfaces
         Task<DeviceData> GetDevicesAsync(string stationCode);
         Task<ResponseModel<SiteResume>> GetSiteDetailByPlantsAsync(string stationCode);
         Task<ResponseModel<string>> GetRealTimeDeviceInfo(FiveMinutesRequest request);
-        
-        Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(string request);
+
+        Task<ResponseModel<List<HealtCheckModel>>> GetStationHealtCheck(string request);
 
         Task<ResponseModel<string>> GetMonthProjectResume(StationAndCollectTimeRequest request);
         Task<ResponseModel<string>> GetDailyProjectResume(StationAndCollectTimeRequest request);

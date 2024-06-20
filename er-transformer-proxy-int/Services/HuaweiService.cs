@@ -36,17 +36,21 @@ namespace er_transformer_proxy_int.Services
             return new ResponseModel<string> { ErrorMessage = response.ErrorMessage, Success = response.Success, Data = response.Data };
         }
 
-        public async Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(string request)
+        public async Task<ResponseModel<List<HealtCheckModel>>> GetStationHealtCheck(string request)
         {
             var response = await _repository.GetStationHealtCheck(request);
 
             if (response.Data is not null)
             {
-                HealtcheckStateEnum healthState = (HealtcheckStateEnum)Enum.Parse(typeof(HealtcheckStateEnum), response.Data.real_health_state.ToString());
-                response.Data.real_health_state = healthState.ToString();
+                foreach (var item in response.Data)
+                {
+                    HealtcheckStateEnum healthState = (HealtcheckStateEnum)Enum.Parse(typeof(HealtcheckStateEnum), item.real_health_state.ToString());
+
+                    item.real_health_state = healthState.ToString();
+                }
             }
 
-            return new ResponseModel<HealtCheckModel> { ErrorMessage = response.ErrorMessage, Success = response.Success, Data = response.Data, ErrorCode= response.ErrorCode };
+            return new ResponseModel<List<HealtCheckModel>> { ErrorMessage = response.ErrorMessage, Success = response.Success, Data = response.Data, ErrorCode= response.ErrorCode };
         }
 
         public async Task<ResponseModel<string>> GetMonthProjectResume(StationAndCollectTimeRequest request)

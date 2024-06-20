@@ -30,6 +30,7 @@
             ReplicateMonthProjectResumeToMongoDb(routeBuilder);
             ReplicateDayProjectResumeToMongoDb(routeBuilder);
             ReplicateHourProjectResumeToMongoDb(routeBuilder);
+            ReplicateHeltCheckToMongoDb(routeBuilder);
         }
 
         private static void GetDeviceList(RouteGroupBuilder rgb)
@@ -298,6 +299,32 @@
             .Produces(204)
             .WithTags("Proxy")
             .WithName("ReplicateHourProjectResumeToMongoDb")
+            .WithOpenApi();
+        }
+
+        private static void ReplicateHeltCheckToMongoDb(RouteGroupBuilder rgb)
+        {
+            rgb.MapPost("ReplicateHealtCheck", async (HttpContext context) =>
+            {
+                try
+                {
+                    var replicateResult = await bussineslogic.ReplicateHealtCheckToMongo();
+                    if (!replicateResult)
+                    {
+                        return Results.NoContent();
+                    }
+
+                    return Results.Ok(replicateResult);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex);
+                }
+            })
+                .Produces(200)
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("ReplicateHealtCheck")
             .WithOpenApi();
         }
     }

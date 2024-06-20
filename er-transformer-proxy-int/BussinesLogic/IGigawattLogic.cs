@@ -22,5 +22,6 @@ namespace er_transformer_proxy_int.BussinesLogic
         Task<bool> ReplicateMonthResumeToMongo();
         Task<bool> ReplicateHourlyResumeToMongo();
         Task<bool> ReplicateDailyResumeToMongo();
+        Task<bool> ReplicateHealtCheckToMongo();
     }
 }

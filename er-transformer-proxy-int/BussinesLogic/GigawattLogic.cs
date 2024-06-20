@@ -9,8 +9,8 @@ using er_transformer_proxy_int.Services.Interfaces;
 using System.Data;
 using System.Text.Json;
 using MoreLinq;
-using Amazon.Runtime.Internal.Transform;
 using System.Text;
+using er_transformer_proxy_int.Data.Repository.Adapters;
 
 namespace er_transformer_proxy_int.BussinesLogic
 {
@@ -123,17 +123,18 @@ namespace er_transformer_proxy_int.BussinesLogic
             }
 
             // obtiene los datos del endpoint de tiempo real
-            var devicesRealTimeInfo = await inverterBrand.GetStationHealtCheck(request.PlantCode);
+            var devicesRealTimeInfo = await _repository.GetHealtCheackAsync(request);
 
-            if (!devicesRealTimeInfo.Success)
+            if (devicesRealTimeInfo is null)
             {
-                response.ErrorMessage = "La marca indicada no existe => " + devicesRealTimeInfo.ErrorMessage;
-                response.ErrorCode = devicesRealTimeInfo.ErrorCode;
+                response.ErrorMessage = "El registro no existe";
+                response.ErrorCode = -1;
                 return response;
             }
 
-            response.Data = devicesRealTimeInfo.Data;
-            response.Success = devicesRealTimeInfo.Success;
+            response.Data = devicesRealTimeInfo;
+            response.Success = true;
+            response.ErrorCode = 200;
 
             return response;
         }
@@ -485,6 +486,29 @@ namespace er_transformer_proxy_int.BussinesLogic
                 // inserta en mongo
                 await this._repository.InsertDayResumeDataAsync(resumetoInsert);
             }
+
+            return true;
+        }
+
+        public async Task<bool> ReplicateHealtCheckToMongo()
+        {
+            var projectList = await this.GetProjectList();
+            // genera la instancia de la marca correspondiente
+            var inverterBrand = _inverterFactory.Create("huawei");
+
+            // obtiene los datos del endpoint de tiempo real
+            var devicesRealTimeInfo = await inverterBrand.GetStationHealtCheck(projectList);
+
+            if (devicesRealTimeInfo.Data is null)
+            {
+                return false;
+            }
+
+            // se agrega la fecha actual a cada registro
+            devicesRealTimeInfo.Data.ForEach(a => { a.collectTime = DateTime.Now; });
+
+            // guarda los datos en la bd de mongo
+            await _repository.InsertHealtCheck(devicesRealTimeInfo.Data);
 
             return true;
         }

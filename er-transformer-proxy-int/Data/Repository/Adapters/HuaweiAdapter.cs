@@ -130,9 +130,9 @@
             return responseData;
         }
 
-        public async Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(string stationCodes)
+        public async Task<ResponseModel<List<HealtCheckModel>>> GetStationHealtCheck(string stationCodes)
         {
-            var responsemethod = new ResponseModel<HealtCheckModel> { Success = false, ErrorCode = -1, ErrorMessage = "No content" };
+            var responsemethod = new ResponseModel<List<HealtCheckModel>> { Success = false, ErrorCode = -1, ErrorMessage = "No content" };
             var api = _configuration["APIs:HuaweiApi"];
             var apiUrl = $"{api}getStationHealtCheck";
 
@@ -142,7 +142,7 @@
 
             if (!response.IsSuccessStatusCode)
             {
-                return new ResponseModel<HealtCheckModel> { Success = false, ErrorCode = (int)response.StatusCode,  ErrorMessage = response.ReasonPhrase };
+                return new ResponseModel<List<HealtCheckModel>> { Success = false, ErrorCode = (int)response.StatusCode, ErrorMessage = response.ReasonPhrase };
             }
 
             // Procesar la respuesta de la API de dispositivo
@@ -159,7 +159,16 @@
                 return responsemethod;
             }
 
-            responsemethod.Data =  deserializedData.data.First().dataItemMap;
+            responsemethod.Data = deserializedData.data.Select(a => new HealtCheckModel
+            {
+                day_income = a.dataItemMap.day_income,
+                stationCode = a.stationCode ?? "",
+                month_power = a.dataItemMap.month_power,
+                total_income = a.dataItemMap.total_income,
+                total_power = a.dataItemMap.total_power,
+                real_health_state = a.dataItemMap.real_health_state
+            }).ToList();
+
             responsemethod.Success = true;
             responsemethod.ErrorMessage = string.Empty;
 

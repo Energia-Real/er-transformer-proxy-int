@@ -203,6 +203,40 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
             }
         }
 
+        public async Task<HealtCheckModel> GetHealtCheackAsync(RequestModel request)
+        {
+            try
+            {
+                var collection = _database.GetCollection<HealtCheckModel>("RepliHealtCheck");
+
+                // Verificar si el índice existe en el campo stationCode
+                var indexKeysDefinition = Builders<HealtCheckModel>.IndexKeys.Ascending(x => x.stationCode);
+                var indexModel = new CreateIndexModel<HealtCheckModel>(indexKeysDefinition);
+                var indexExists = await collection.Indexes.CreateOneAsync(indexModel);
+
+                // Si el índice no existe, crearlo
+                if (string.IsNullOrEmpty(indexExists))
+                {
+                    await collection.Indexes.CreateOneAsync(indexModel);
+                }
+
+                var filter = Builders<HealtCheckModel>.Filter.Eq(x => x.stationCode, request.PlantCode);
+
+                // Obtener el último registro basado en CollectTime
+                var resultado = await collection.Find(filter)
+                                                .SortByDescending(x => x.collectTime)
+                                                .FirstOrDefaultAsync();
+
+                return resultado;
+            }
+            catch (Exception ex)
+            {
+                // Manejar la excepción y devolver un resultado vacío o lanzarla nuevamente según sea necesario
+                Console.WriteLine($"Error al conectar con la base de datos: {ex.Message}");
+                return new HealtCheckModel();
+            }
+        }
+
         public async Task InsertDeviceDataAsync(PlantDeviceResult device)
         {
             try
@@ -260,6 +294,21 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
 
                 // Insert the new record into the collection
                 await collection.InsertOneAsync(resume);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al insertar en la base de datos: {ex.Message}");
+            }
+        }
+
+        public async Task InsertHealtCheck(List<HealtCheckModel> resume)
+        {
+            try
+            {
+                var collection = _database.GetCollection<HealtCheckModel>("RepliHealtCheck");
+
+                // Insert the new record into the collection
+                await collection.InsertManyAsync(resume);
             }
             catch (Exception ex)
             {
