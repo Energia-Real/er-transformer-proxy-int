@@ -154,7 +154,7 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
                 // Verificar si el índice existe en el campo PlantCode
                 var indexKeysDefinition = Builders<MonthProjectResume>.IndexKeys.Ascending(x => x.stationCode);
                 var indexModel = new CreateIndexModel<MonthProjectResume>(indexKeysDefinition);
-                await collection.Indexes.CreateOneAsync(indexModel); // No es necesario verificar si el índice existe
+                //await collection.Indexes.CreateOneAsync(indexModel); // No es necesario verificar si el índice existe
 
                 // Construir el filtro según el requestModel
                 var filters = new List<FilterDefinition<MonthProjectResume>>();
