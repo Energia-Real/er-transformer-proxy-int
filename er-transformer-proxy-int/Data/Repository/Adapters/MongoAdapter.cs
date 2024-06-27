@@ -3,6 +3,7 @@ using er_transformer_proxy_int.Model;
 using er_transformer_proxy_int.Model.Dto;
 using er_transformer_proxy_int.Model.Huawei;
 using MongoDB.Driver;
+using System;
 
 namespace er_transformer_proxy_int.Data.Repository.Adapters
 {
@@ -63,11 +64,27 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
             {
                 var collection = _database.GetCollection<PlantDeviceResult>("RepliRealtimeData");
 
-                // Crear un filtro para la consulta
-                var filter = Builders<PlantDeviceResult>.Filter.And(
+                // Crea un filtro básico con las condiciones existentes
+                var filters = new List<FilterDefinition<PlantDeviceResult>>
+                {
                     Builders<PlantDeviceResult>.Filter.Eq("brandName", request.Brand.ToLower()),
-                    Builders<PlantDeviceResult>.Filter.Eq("stationCode", request.PlantCode)
-                );
+                    Builders<PlantDeviceResult>.Filter.Eq("stationCode", request.PlantCode),
+                    Builders<PlantDeviceResult>.Filter.Ne("invertersList", new List<DeviceDataResponse<DeviceInverterDataItem>>()), 
+                    Builders<PlantDeviceResult>.Filter.Ne("metterList", new List<DeviceDataResponse<DeviceMetterDataItem>>())        
+                };
+
+                //// Agregar filtro por fecha si StartDate no es el valor mínimo
+                //if (request.StartDate != DateTime.MinValue)
+                //{
+                //    // Ajustar StartDate al inicio del día y EndDate al final del día
+                //    var startOfDay = request.StartDate.Date; 
+                //    var endOfDay = request.StartDate.Date.AddDays(1).AddTicks(-1);  
+
+                //    filters.Add(Builders<PlantDeviceResult>.Filter.Gte("repliedDateTime", startOfDay));
+                //    filters.Add(Builders<PlantDeviceResult>.Filter.Lte("repliedDateTime", endOfDay));
+                //}
+
+                var filter = Builders<PlantDeviceResult>.Filter.And(filters);
 
                 // Ordenar los resultados por repliedDateTime de forma descendente
                 var sort = Builders<PlantDeviceResult>.Sort.Descending("repliedDateTime");
