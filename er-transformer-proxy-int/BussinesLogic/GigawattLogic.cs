@@ -190,7 +190,7 @@ namespace er_transformer_proxy_int.BussinesLogic
             var response = await this._repository.GetMonthProjectResumesAsync(request);
             foreach (var item in response)
             {
-                item.Monthresume.ForEach(a => { a.InverterPower = a.InverterPower / 1000; a.InverterPower = a.DataRecovery == 0 ? a.InverterPower : a.DataRecovery ?? 0; });
+                item.Monthresume.ForEach(a => { a.InverterPower = a.InverterPower / 1000; a.InverterPower = a.DataRecovery == 0 || a.DataRecovery is null ? a.InverterPower : a.DataRecovery ?? 0; });
             }
 
             return response;
