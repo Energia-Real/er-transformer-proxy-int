@@ -64,25 +64,24 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
             {
                 var collection = _database.GetCollection<PlantDeviceResult>("RepliRealtimeData");
 
-                // Crea un filtro básico con las condiciones existentes
+                // Crear un filtro básico con las condiciones existentes
                 var filters = new List<FilterDefinition<PlantDeviceResult>>
+        {
+            Builders<PlantDeviceResult>.Filter.Eq("brandName", request.Brand.ToLower()),
+            Builders<PlantDeviceResult>.Filter.Eq("stationCode", request.PlantCode),
+            Builders<PlantDeviceResult>.Filter.Ne("invertersList", new List<DeviceDataResponse<DeviceInverterDataItem>>()),
+            Builders<PlantDeviceResult>.Filter.Ne("metterList", new List<DeviceDataResponse<DeviceMetterDataItem>>())
+        };
+
+                // Agregar filtro por fecha para abarcar todo el mes si StartDate no es el valor mínimo
+                if (request.StartDate != DateTime.MinValue)
                 {
-                    Builders<PlantDeviceResult>.Filter.Eq("brandName", request.Brand.ToLower()),
-                    Builders<PlantDeviceResult>.Filter.Eq("stationCode", request.PlantCode),
-                    Builders<PlantDeviceResult>.Filter.Ne("invertersList", new List<DeviceDataResponse<DeviceInverterDataItem>>()), 
-                    Builders<PlantDeviceResult>.Filter.Ne("metterList", new List<DeviceDataResponse<DeviceMetterDataItem>>())        
-                };
+                    var startOfMonth = new DateTime(request.StartDate.Year, request.StartDate.Month, 1);
+                    var endOfMonth = startOfMonth.AddMonths(1).AddTicks(-1);
 
-                //// Agregar filtro por fecha si StartDate no es el valor mínimo
-                //if (request.StartDate != DateTime.MinValue)
-                //{
-                //    // Ajustar StartDate al inicio del día y EndDate al final del día
-                //    var startOfDay = request.StartDate.Date; 
-                //    var endOfDay = request.StartDate.Date.AddDays(1).AddTicks(-1);  
-
-                //    filters.Add(Builders<PlantDeviceResult>.Filter.Gte("repliedDateTime", startOfDay));
-                //    filters.Add(Builders<PlantDeviceResult>.Filter.Lte("repliedDateTime", endOfDay));
-                //}
+                    filters.Add(Builders<PlantDeviceResult>.Filter.Gte("repliedDateTime", startOfMonth));
+                    filters.Add(Builders<PlantDeviceResult>.Filter.Lte("repliedDateTime", endOfMonth));
+                }
 
                 var filter = Builders<PlantDeviceResult>.Filter.And(filters);
 

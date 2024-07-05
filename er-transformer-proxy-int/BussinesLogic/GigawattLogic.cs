@@ -1,6 +1,4 @@
-﻿using Amazon.Runtime.Internal;
-using er.library.dto.Response;
-using er_transformer_proxy_int.Data.Repository.Interfaces;
+﻿using er_transformer_proxy_int.Data.Repository.Interfaces;
 using er_transformer_proxy_int.Model;
 using er_transformer_proxy_int.Model.Dto;
 using er_transformer_proxy_int.Model.Gigawatt;
@@ -10,7 +8,6 @@ using System.Data;
 using System.Text.Json;
 using MoreLinq;
 using System.Text;
-using er_transformer_proxy_int.Data.Repository.Adapters;
 
 namespace er_transformer_proxy_int.BussinesLogic
 {
@@ -28,7 +25,9 @@ namespace er_transformer_proxy_int.BussinesLogic
 
             if (plantResponse is null)
             {
-                plantResponse = await this.GetPlantdeviceData(request);
+                response.ErrorCode = 204;
+                response.ErrorMessage = "No hay datos para el periodo establecido";
+                return response;
             }
 
             var metterList = plantResponse.metterList;
