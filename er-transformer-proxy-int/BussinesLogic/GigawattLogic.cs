@@ -23,7 +23,7 @@ namespace er_transformer_proxy_int.BussinesLogic
             var commonTiles = new List<CommonTileResponse>();
             var plantResponse = await this.GetPlantDeviceDataFromMongo(request);
 
-            if (plantResponse is null)
+            if (plantResponse is null || plantResponse.metterList is null || !plantResponse.metterList.Any())
             {
                 response.ErrorCode = 204;
                 response.ErrorMessage = "No hay datos para el periodo establecido";

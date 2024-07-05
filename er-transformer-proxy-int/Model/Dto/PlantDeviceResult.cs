@@ -9,5 +9,7 @@
         public DateTime repliedDateTime { get; set; }
         public List<DeviceDataResponse<DeviceInverterDataItem>> invertersList { get; set; }
         public List<DeviceDataResponse<DeviceMetterDataItem>> metterList { get; set; }
+
+        public DateTime Timestamp { get; set; }
     }
 }
