@@ -9,6 +9,7 @@ namespace er_transformer_proxy_int.Data.Repository.Interfaces
         Task<List<Device>> GetDeviceDataAsyncByCode(string stationCode);
         Task<List<Device>> GetDeviceDataAsync();
         Task<PlantDeviceResult> GetRepliedDataAsync(RequestModel request);
+        Task<List<PlantDeviceResult>> GetRepliedDataListAsync(RequestModel request);
         Task<List<PlantDto>> GetPlantListAsync();
 
         Task<List<MonthProjectResume>> GetMonthProjectResumesAsync(RequestModel? requestModel);
