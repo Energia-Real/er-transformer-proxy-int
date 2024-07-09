@@ -2,6 +2,8 @@
 using er_transformer_proxy_int.Model;
 using er_transformer_proxy_int.Model.Dto;
 using er_transformer_proxy_int.Model.Huawei;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
 
@@ -66,21 +68,21 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
 
                 // Crear un filtro básico con las condiciones existentes
                 var filters = new List<FilterDefinition<PlantDeviceResult>>
-        {
-            Builders<PlantDeviceResult>.Filter.Eq("brandName", request.Brand.ToLower()),
-            Builders<PlantDeviceResult>.Filter.Eq("stationCode", request.PlantCode),
-            Builders<PlantDeviceResult>.Filter.Ne("invertersList", new List<DeviceDataResponse<DeviceInverterDataItem>>()),
-            Builders<PlantDeviceResult>.Filter.Ne("metterList", new List<DeviceDataResponse<DeviceMetterDataItem>>())
-        };
+                {
+                    Builders<PlantDeviceResult>.Filter.Eq("brandName", request.Brand.ToLower()),
+                    Builders<PlantDeviceResult>.Filter.Eq("stationCode", request.PlantCode),
+                    Builders<PlantDeviceResult>.Filter.Ne("invertersList", new List<DeviceDataResponse<DeviceInverterDataItem>>()),
+                    Builders<PlantDeviceResult>.Filter.Ne("metterList", new List<DeviceDataResponse<DeviceMetterDataItem>>())
+                };
 
                 // Agregar filtro por fecha para abarcar todo el mes si StartDate no es el valor mínimo
                 if (request.StartDate != DateTime.MinValue)
                 {
-                    var startOfMonth = new DateTime(request.StartDate.Year, request.StartDate.Month, 1);
-                    var endOfMonth = startOfMonth.AddMonths(1).AddTicks(-1);
+                    var startDate = new DateTime(request.StartDate.Year, request.StartDate.Month, 1);
+                    var endDate = new DateTime(request.EndDate.Year, request.EndDate.Month, DateTime.DaysInMonth(request.EndDate.Year, request.EndDate.Month), 23, 59, 59, 999);
 
-                    filters.Add(Builders<PlantDeviceResult>.Filter.Gte("repliedDateTime", startOfMonth));
-                    filters.Add(Builders<PlantDeviceResult>.Filter.Lte("repliedDateTime", endOfMonth));
+                    filters.Add(Builders<PlantDeviceResult>.Filter.Gte("repliedDateTime", startDate));
+                    filters.Add(Builders<PlantDeviceResult>.Filter.Lte("repliedDateTime", endDate));
                 }
 
                 var filter = Builders<PlantDeviceResult>.Filter.And(filters);
@@ -98,6 +100,69 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
                 // Manejar la excepción y devolver un resultado vacío o lanzarla nuevamente según sea necesario
                 Console.WriteLine($"Error al conectar con la base de datos: {ex.Message}");
                 return new PlantDeviceResult();
+            }
+        }
+
+        public async Task<List<PlantDeviceResult>> GetRepliedDataListAsync(RequestModel request)
+        {
+            try
+            {
+                var collection = _database.GetCollection<PlantDeviceResult>("RepliRealtimeData");
+
+                // Crear un filtro básico con las condiciones existentes
+                var filters = new List<FilterDefinition<PlantDeviceResult>>
+        {
+            Builders<PlantDeviceResult>.Filter.Eq("brandName", request.Brand.ToLower()),
+            Builders<PlantDeviceResult>.Filter.Eq("stationCode", request.PlantCode),
+            Builders<PlantDeviceResult>.Filter.Ne("invertersList", new List<DeviceDataResponse<DeviceInverterDataItem>>()),
+            Builders<PlantDeviceResult>.Filter.Ne("metterList", new List<DeviceDataResponse<DeviceMetterDataItem>>())
+        };
+
+                // Agregar filtro por fecha para abarcar todo el mes si StartDate no es el valor mínimo
+                if (request.StartDate != DateTime.MinValue)
+                {
+                    var startDate = new DateTime(request.StartDate.Year, request.StartDate.Month, 1);
+                    var endDate = new DateTime(request.EndDate.Year, request.EndDate.Month, DateTime.DaysInMonth(request.EndDate.Year, request.EndDate.Month), 23, 59, 59, 999);
+
+                    filters.Add(Builders<PlantDeviceResult>.Filter.Gte("repliedDateTime", startDate));
+                    filters.Add(Builders<PlantDeviceResult>.Filter.Lte("repliedDateTime", endDate));
+                }
+
+                var filter = Builders<PlantDeviceResult>.Filter.And(filters);
+
+                // Realizar la consulta y agrupar por día, seleccionando el último registro de cada día
+                var aggregate = await collection.Aggregate()
+                    .Match(filter)
+                    .SortByDescending(p => p.repliedDateTime)
+                    .Group(new BsonDocument
+                    {
+                { "_id", new BsonDocument
+                    {
+                        { "year", new BsonDocument("$year", "$repliedDateTime") },
+                        { "month", new BsonDocument("$month", "$repliedDateTime") },
+                        { "day", new BsonDocument("$dayOfMonth", "$repliedDateTime") }
+                    }
+                },
+                { "lastRecord", new BsonDocument("$first", "$$ROOT") }
+                    })
+                    .Sort(new BsonDocument("_id", 1))  // Ordenar por fecha ascendente
+                    .Project(new BsonDocument
+                    {
+                { "_id", 0 },
+                { "lastRecord", 1 }
+                    })
+                    .ToListAsync();
+
+                // Extraer los resultados desde el campo lastRecord
+                var result = aggregate.Select(record => BsonSerializer.Deserialize<PlantDeviceResult>(record["lastRecord"].AsBsonDocument)).ToList();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                // Manejar la excepción y devolver un resultado vacío o lanzarla nuevamente según sea necesario
+                Console.WriteLine($"Error al conectar con la base de datos: {ex.Message}");
+                return new List<PlantDeviceResult>();
             }
         }
 
