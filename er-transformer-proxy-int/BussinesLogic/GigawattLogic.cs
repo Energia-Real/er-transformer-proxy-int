@@ -69,7 +69,7 @@ namespace er_transformer_proxy_int.BussinesLogic
                 commonTiles.Add(new CommonTileResponse { Title = "Life Time Energy Consumption (CFE)", Value = Convert.ToString(reverActiveCap) });
                 commonTiles.Add(new CommonTileResponse { Title = "Avoided Emmisions (tCO2e)", Value = Convert.ToString(avoidedEmisions) });
                 commonTiles.Add(new CommonTileResponse { Title = "Energy Coverage", Value = Convert.ToString(energyCoverage) });
-                commonTiles.Add(new CommonTileResponse { Title = "Coincident Solar Consumption", Value = Convert.ToString(solarConsumption) });
+                commonTiles.Add(new CommonTileResponse { Title = "Coincident Solar Consumption", Value = Convert.ToString(totalCap) });
                 commonTiles.Add(new CommonTileResponse { Title = "Solar Coverage", Value = Convert.ToString(solarcoverage) });
                 response.ErrorCode = 0;
                 response.Success = true;
