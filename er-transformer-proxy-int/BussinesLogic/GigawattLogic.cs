@@ -50,7 +50,7 @@ namespace er_transformer_proxy_int.BussinesLogic
 
                 // la diferencia es el ultimo menos el primero, lo cual nos da lo que se genero en el intervalo de tiempo de request
                 var reverActiveCap = lastRecord.metterList.Sum(a => a.dataItemMap.reverse_active_cap) - firstRecord.metterList.Sum(a => a.dataItemMap.reverse_active_cap);
-                var solarConsumption = lastRecord.metterList.Sum(a => a.dataItemMap.total_apparent_power) - firstRecord.metterList.Sum(a => a.dataItemMap.total_apparent_power);
+                var solarConsumption = lastRecord.metterList.Sum(a => a.dataItemMap.total_apparent_power);
                 var senderToCFE = lastRecord.metterList.Sum(a => a.dataItemMap.active_cap) - firstRecord.metterList.Sum(a => a.dataItemMap.active_cap);
 
                 // se hace lo mismo para el inverter
