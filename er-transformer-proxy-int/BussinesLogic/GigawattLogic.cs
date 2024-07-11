@@ -9,6 +9,7 @@ using System.Text.Json;
 using MoreLinq;
 using System.Text;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Connections.Features;
 
 namespace er_transformer_proxy_int.BussinesLogic
 {
@@ -57,11 +58,11 @@ namespace er_transformer_proxy_int.BussinesLogic
                 var totalCap = lastRecord.invertersList.Sum(a => a.dataItemMap.total_cap) - firstRecord.invertersList.Sum(a => a.dataItemMap.total_cap);
 
                 var avoidedEmisions = (totalCap / 1000) * factorEnergia;
-                var energyCoverage = totalCap / reverActiveCap;
+                var energyCoverage = totalCap / reverActiveCap ?? 0;
                 var consumoSFV = totalCap - senderToCFE;
                 var totalRealConsumption = consumoSFV + reverActiveCap;
                 var solarcoverageOperation = (totalCap / totalRealConsumption) * 100;
-                var solarcoverage = Math.Round( (decimal?)solarcoverageOperation ?? 0, 2);
+                var solarcoverage = Math.Round((decimal?)solarcoverageOperation ?? 0, 2);
 
                 // realizamos el mapeo de cada tile a devolver
                 commonTiles.Add(new CommonTileResponse { Title = "Last connection timeStamp", Value = DateTime.Now.ToString() });
@@ -219,11 +220,16 @@ namespace er_transformer_proxy_int.BussinesLogic
                 return false;
             }
 
+            var plantListMerco = new List<string> { "NE=33778453", "NE=33723147", "NE=33691316", "NE=33761005", "NE=33795293", "NE=33754356" };
+
+            // Filtrar los proyectos que tienen un NE presente en la lista plantListMerco
+            var mercoProyects = proyects.Where(p => plantListMerco.Contains(p.stationCode)).ToList();
+
             // replica todos los datos de todos los dispositivos
-            var devices = await this.ReplicateAlldeviceData(proyects);
+            var devices = await this.ReplicateAlldeviceData(mercoProyects);
 
             // agrupa los dispositivos por proyecto
-            foreach (var proyect in proyects.GroupBy(a => a.stationCode))
+            foreach (var proyect in mercoProyects.GroupBy(a => a.stationCode))
             {
                 var insertIntoMongo = new PlantDeviceResult();
                 insertIntoMongo.invertersList = new List<DeviceDataResponse<DeviceInverterDataItem>>();
