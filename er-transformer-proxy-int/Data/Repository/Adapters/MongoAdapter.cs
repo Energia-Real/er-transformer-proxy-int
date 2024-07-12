@@ -121,8 +121,8 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
                 // Agregar filtro por fecha para abarcar todo el mes si StartDate no es el valor mínimo
                 if (request.StartDate != DateTime.MinValue)
                 {
-                    var startDate = new DateTime(request.StartDate.Year, request.StartDate.Month, 1);
-                    var endDate = new DateTime(request.EndDate.Year, request.EndDate.Month, DateTime.DaysInMonth(request.EndDate.Year, request.EndDate.Month), 23, 59, 59, 999);
+                    var startDate = new DateTime(request.StartDate.Year, request.StartDate.Month, request.StartDate.Day, 0, 0, 0, DateTimeKind.Utc);
+                    var endDate = new DateTime(request.EndDate.Year, request.EndDate.Month, request.EndDate.Day, 23, 59, 59, 999, DateTimeKind.Utc);
 
                     filters.Add(Builders<PlantDeviceResult>.Filter.Gte("repliedDateTime", startDate));
                     filters.Add(Builders<PlantDeviceResult>.Filter.Lte("repliedDateTime", endDate));
@@ -163,6 +163,47 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
                 // Manejar la excepción y devolver un resultado vacío o lanzarla nuevamente según sea necesario
                 Console.WriteLine($"Error al conectar con la base de datos: {ex.Message}");
                 return new List<PlantDeviceResult>();
+            }
+        }
+
+        public async Task<List<DayProjectResume>> GetDailyRepliedDataAsync(RequestModel request)
+        {
+            try
+            {
+                var collection = _database.GetCollection<DayProjectResume>("testDaily");
+
+                // Crear un filtro básico con las condiciones existentes
+                var filters = new List<FilterDefinition<DayProjectResume>>
+                {
+                    Builders<DayProjectResume>.Filter.Eq("brandName", request.Brand.ToLower()),
+                    Builders<DayProjectResume>.Filter.Eq("stationCode", request.PlantCode),
+                    Builders<DayProjectResume>.Filter.Ne("invertersList", new List<DeviceDataResponse<DeviceInverterDataItem>>()),
+                    Builders<DayProjectResume>.Filter.Ne("metterList", new List<DeviceDataResponse<DeviceMetterDataItem>>())
+                };
+
+                // Agregar filtro por fecha para abarcar todo el mes si StartDate no es el valor mínimo
+                if (request.StartDate != DateTime.MinValue)
+                {
+                    var startDate = new DateTime(request.StartDate.Year, request.StartDate.Month, request.StartDate.Day, 0, 0, 0, DateTimeKind.Utc);
+                    var endDate = new DateTime(request.EndDate.Year, request.EndDate.Month, request.EndDate.Day, 23, 59, 59, 999, DateTimeKind.Utc);
+                    filters.Add(Builders<DayProjectResume>.Filter.Gte("repliedDateTime", startDate));
+                    filters.Add(Builders<DayProjectResume>.Filter.Lte("repliedDateTime", endDate));
+                }
+
+                var filter = Builders<DayProjectResume>.Filter.And(filters);
+
+                // Ordenar los resultados por repliedDateTime de forma descendente
+                var sort = Builders<DayProjectResume>.Sort.Descending("repliedDateTime");
+
+                // Realizar la consulta y obtener el primer resultado
+                return await collection.Find(filter).Sort(sort).Limit(1).ToListAsync();
+
+            }
+            catch (Exception ex)
+            {
+                // Manejar la excepción y devolver un resultado vacío o lanzarla nuevamente según sea necesario
+                Console.WriteLine($"Error al conectar con la base de datos: {ex.Message}");
+                return new List<DayProjectResume>();
             }
         }
 

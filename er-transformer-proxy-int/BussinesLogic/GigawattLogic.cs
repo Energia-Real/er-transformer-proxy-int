@@ -27,14 +27,26 @@ namespace er_transformer_proxy_int.BussinesLogic
             try
             {
                 var plantResponse = await _repository.GetRepliedDataListAsync(request);
+                var dailyPlantResponse = await _repository.GetDailyRepliedDataAsync(request);
 
                 if (plantResponse == null || !plantResponse.Any() || plantResponse.FirstOrDefault()?.metterList == null || !plantResponse.First().metterList.Any())
+
                 {
                     response.Success = false;
-                    commonTiles.Add(new CommonTileResponse { Title = "No hay datos para el periodo establecido", Value = DateTime.Now.ToString() });
+                    commonTiles.Add(new CommonTileResponse { Title = "No hay datos en tiempo real para el periodo establecido", Value = DateTime.Now.ToString() });
                     response.Data = commonTiles;
                     response.ErrorCode = 204;
-                    response.ErrorMessage = "No hay datos para el periodo establecido";
+                    response.ErrorMessage = "No hay datos en tiempo real para el periodo establecido";
+                    return response;
+                }
+
+                if (dailyPlantResponse == null || !dailyPlantResponse.Any() || dailyPlantResponse.FirstOrDefault()?.DayResume == null || !dailyPlantResponse.First().DayResume.Any())
+                {
+                    response.Success = false;
+                    commonTiles.Add(new CommonTileResponse { Title = "No hay datos diarios para el periodo establecido", Value = DateTime.Now.ToString() });
+                    response.Data = commonTiles;
+                    response.ErrorCode = 204;
+                    response.ErrorMessage = "No hay datos diarios para el periodo establecido";
                     return response;
                 }
 
@@ -54,9 +66,13 @@ namespace er_transformer_proxy_int.BussinesLogic
                 var solarConsumption = lastRecord.metterList.Sum(a => a.dataItemMap.total_apparent_power);
                 var senderToCFE = lastRecord.metterList.Sum(a => a.dataItemMap.active_cap) - firstRecord.metterList.Sum(a => a.dataItemMap.active_cap);
 
-                // se hace lo mismo para el inverter
-                var totalCap = lastRecord.invertersList.Sum(a => a.dataItemMap.total_cap) - firstRecord.invertersList.Sum(a => a.dataItemMap.total_cap);
+                // calculo de total_Cap
+                var dailyList = dailyPlantResponse.SelectMany(a => a.DayResume);
+                var totalLast = dailyList.First(a => a.CollectTime.Day == request.StartDate.Day).PVYield;
+                var totalFirst = dailyList.First(a => a.CollectTime.Day == request.EndDate.Day).PVYield;
+                double? totalCap = totalLast - totalFirst;
 
+                // calculo de campos finales
                 var avoidedEmisions = (totalCap / 1000) * factorEnergia;
                 var energyCoverage = totalCap / reverActiveCap ?? 0;
                 var consumoSFV = totalCap - senderToCFE;
