@@ -519,6 +519,9 @@ namespace er_transformer_proxy_int.BussinesLogic
                     stationCode = station.FirstOrDefault().stationCode
                 };
 
+                // elimina los registros previos del mes en curso para insertar los nuevos
+                await this._repository.DeleteManyFromDailyCollection("RepliDayProjectResume", now.Year, now.Month, station.FirstOrDefault().stationCode);
+
                 // inserta en mongo
                 await this._repository.InsertDayResumeDataAsync(resumetoInsert);
             }
@@ -727,13 +730,18 @@ namespace er_transformer_proxy_int.BussinesLogic
         {
             // obtiene de mongo todas las plantas
             var projects = await this._repository.GetPlantListAsync();
-            if (projects is null || !projects.Any())
+            var plantListMerco = new List<string> { "NE=33778453", "NE=33723147", "NE=33691316", "NE=33761005", "NE=33795293", "NE=33754356" };
+
+            // Filtrar los proyectos que tienen un NE presente en la lista plantListMerco
+            var mercoProyects = projects.Where(p => plantListMerco.Contains(p.PlantCode)).ToList();
+            if (mercoProyects is null || !mercoProyects.Any())
             {
                 return string.Empty;
             }
+
             StringBuilder projectListBuilder = new StringBuilder();
 
-            foreach (var project in projects)
+            foreach (var project in mercoProyects)
             {
                 projectListBuilder.Append(project.PlantCode).Append(",");
             }

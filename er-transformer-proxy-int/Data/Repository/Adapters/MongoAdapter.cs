@@ -453,6 +453,32 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
             }
         }
 
+        public async Task DeleteManyFromDailyCollection(string collectionName, int year, int month, string stationCode)
+        {
+            try
+            {
+                var collection = _database.GetCollection<DayResumeResponse>(collectionName);
+
+                // Crear el rango de fechas para el mes especificado
+                var startDate = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+                var endDate = startDate.AddMonths(1).AddTicks(-1);
+
+                // Crear el filtro para el mes específico y la estación
+                var filter = Builders<DayResumeResponse>.Filter.And(
+                    Builders<DayResumeResponse>.Filter.Gte("repliedDateTime", startDate),
+                    Builders<DayResumeResponse>.Filter.Lte("repliedDateTime", endDate),
+                    Builders<DayResumeResponse>.Filter.Eq("stationCode", stationCode)
+                );
+
+                // Eliminar todos los registros que coincidan con el filtro
+                await collection.DeleteManyAsync(filter);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al eliminar en la base de datos: {ex.Message}");
+            }
+        }
+
         public async Task DeleteManyFromCollectionByDate(string collectionName, DateTime date)
         {
             try

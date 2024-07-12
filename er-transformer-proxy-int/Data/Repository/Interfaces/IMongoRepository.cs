@@ -25,6 +25,7 @@ namespace er_transformer_proxy_int.Data.Repository.Interfaces
 
         Task DeleteManyFromCollection(string collectionName);
         Task DeleteManyFromCollectionByDate(string collectionName, DateTime date);
+        Task DeleteManyFromDailyCollection(string collectionName, int year, int month, string stationCode);
 
         Task<List<DayProjectResume>> GetDailyRepliedDataAsync(RequestModel request);
     }
