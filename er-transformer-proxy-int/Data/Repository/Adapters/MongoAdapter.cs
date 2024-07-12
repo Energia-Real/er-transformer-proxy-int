@@ -170,7 +170,7 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
         {
             try
             {
-                var collection = _database.GetCollection<DayProjectResume>("testDaily");
+                var collection = _database.GetCollection<DayProjectResume>("RepliDayProjectResume");
 
                 // Crear un filtro básico con las condiciones existentes
                 var filters = new List<FilterDefinition<DayProjectResume>>
