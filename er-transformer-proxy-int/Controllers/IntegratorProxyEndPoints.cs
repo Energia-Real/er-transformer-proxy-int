@@ -31,6 +31,7 @@
             ReplicateDayProjectResumeToMongoDb(routeBuilder);
             ReplicateHourProjectResumeToMongoDb(routeBuilder);
             ReplicateHeltCheckToMongoDb(routeBuilder);
+            GetGlobalSolarCoverage(routeBuilder);
         }
 
         private static void GetDeviceList(RouteGroupBuilder rgb)
@@ -195,6 +196,32 @@
             .Produces(204)
             .WithTags("Proxy")
             .WithName("GetMonthProyectResume")
+            .WithOpenApi();
+        }
+
+        private static void GetGlobalSolarCoverage(RouteGroupBuilder rgb)
+        {
+            rgb.MapPost("GetGlobalSolarCoverage", async (HttpContext context, [FromBody] RequestModel? request) =>
+            {
+                try
+                {
+                    var resumeResult = await bussineslogic.GetGlobalSolarCoverage(request);
+                    if (!resumeResult.Data.Any())
+                    {
+                        return Results.NoContent();
+                    }
+
+                    return Results.Ok(resumeResult);
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex);
+                }
+            })
+            .Produces(200)
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("GetGlobalSolarCoverage")
             .WithOpenApi();
         }
 

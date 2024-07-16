@@ -119,21 +119,22 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
         };
 
                 // Agregar filtro por fecha para abarcar todo el mes si StartDate no es el valor mínimo
-                if (request.StartDate != DateTime.MinValue)
-                {
-                    var startDate = new DateTime(request.StartDate.Year, request.StartDate.Month, request.StartDate.Day, 0, 0, 0, DateTimeKind.Utc);
-                    var endDate = new DateTime(request.EndDate.Year, request.EndDate.Month, request.EndDate.Day, 23, 59, 59, 999, DateTimeKind.Utc);
 
-                    filters.Add(Builders<PlantDeviceResult>.Filter.Gte("repliedDateTime", startDate));
-                    filters.Add(Builders<PlantDeviceResult>.Filter.Lte("repliedDateTime", endDate));
-                }
+                var startDate = new DateTime(request.StartDate.Year, request.StartDate.Month, request.StartDate.Day, 0, 0, 0, DateTimeKind.Utc);
+
+                var endDate = new DateTime(request.EndDate.Year, request.EndDate.Month, request.EndDate.Day, 23, 59, 59, 999, DateTimeKind.Utc);
+
+                endDate = request.RequestType == 1 ? endDate : new DateTime(request.StartDate.Year, request.StartDate.Month, DateTime.DaysInMonth(request.StartDate.Year, request.StartDate.Month), 23, 59, 59, 999, DateTimeKind.Utc);
+                
+                filters.Add(Builders<PlantDeviceResult>.Filter.Gte("repliedDateTime", startDate));
+                filters.Add(Builders<PlantDeviceResult>.Filter.Lte("repliedDateTime", endDate));
+
 
                 var filter = Builders<PlantDeviceResult>.Filter.And(filters);
 
                 // Realizar la consulta y agrupar por día, seleccionando el último registro de cada día
                 var aggregate = await collection.Aggregate()
                     .Match(filter)
-                    .SortByDescending(p => p.repliedDateTime)
                     .Group(new BsonDocument
                     {
                 { "_id", new BsonDocument
@@ -181,6 +182,7 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
 
                 var startDate = new DateTime(request.StartDate.Year, request.StartDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
                 var endDate = new DateTime(request.EndDate.Year, request.EndDate.Month, DateTime.DaysInMonth(request.EndDate.Year, request.EndDate.Month), 23, 59, 59, 999, DateTimeKind.Utc);
+
                 filters.Add(Builders<DayProjectResume>.Filter.Gte("repliedDateTime", startDate));
                 filters.Add(Builders<DayProjectResume>.Filter.Lte("repliedDateTime", endDate));
 
@@ -194,6 +196,30 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
                 // Manejar la excepción y devolver un resultado vacío o lanzarla nuevamente según sea necesario
                 Console.WriteLine($"Error al conectar con la base de datos: {ex.Message}");
                 return new List<DayProjectResume>();
+            }
+        }
+
+        public async Task<List<PlantDto>> GetPlantCodeByclientNameAsync(RequestModel request)
+        {
+            try
+            {
+                var collection = _database.GetCollection<PlantDto>("Plants");
+
+                // Crear un filtro básico con las condiciones existentes
+                var filters = new List<FilterDefinition<PlantDto>>
+                {
+                    Builders<PlantDto>.Filter.Regex("plantName", new BsonRegularExpression(request.ClientName, "i"))
+                };
+
+                var filter = Builders<PlantDto>.Filter.And(filters);
+
+                return await collection.Find(filter).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                // Manejar la excepción y devolver un resultado vacío o lanzarla nuevamente según sea necesario
+                Console.WriteLine($"Error al conectar con la base de datos: {ex.Message}");
+                return new List<PlantDto>();
             }
         }
 

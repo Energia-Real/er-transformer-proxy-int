@@ -11,7 +11,7 @@ namespace er_transformer_proxy_int.Data.Repository.Interfaces
         Task<PlantDeviceResult> GetRepliedDataAsync(RequestModel request);
         Task<List<PlantDeviceResult>> GetRepliedDataListAsync(RequestModel request);
         Task<List<PlantDto>> GetPlantListAsync();
-
+        Task<List<PlantDto>> GetPlantCodeByclientNameAsync(RequestModel request);
         Task<List<MonthProjectResume>> GetMonthProjectResumesAsync(RequestModel? requestModel);
 
         Task<HealtCheckModel> GetHealtCheackAsync(RequestModel request);

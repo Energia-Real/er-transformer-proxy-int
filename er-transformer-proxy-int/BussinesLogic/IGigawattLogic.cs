@@ -17,7 +17,7 @@ namespace er_transformer_proxy_int.BussinesLogic
         Task<List<MonthProjectResume>> GetMonthResume(RequestModel? request);
 
         Task<PlantDeviceResult> GetPlantDeviceDataFromMongo(RequestModel request);
-
+        Task<ResponseModel<List<CommonTileResponse>>> GetGlobalSolarCoverage(RequestModel request);
         Task<bool> ReplicateToMongoDb();
         Task<bool> ReplicateMonthResumeToMongo();
         Task<bool> ReplicateHourlyResumeToMongo();

@@ -26,8 +26,23 @@ namespace er_transformer_proxy_int.BussinesLogic
 
             try
             {
-                var plantResponse = await _repository.GetRepliedDataListAsync(request);
-                var dailyPlantResponse = await _repository.GetDailyRepliedDataAsync(request);
+                var plantResponse = new List<PlantDeviceResult>();
+                var dailyPlantResponse = new List<DayProjectResume>();
+
+                if (request.RequestType == 1)
+                {
+                    plantResponse.AddRange(await _repository.GetRepliedDataListAsync(request));
+                    dailyPlantResponse.AddRange(await _repository.GetDailyRepliedDataAsync(request));
+                }
+                else if (request.RequestType == 2)
+                {
+                    foreach (var month in request.Months)
+                    {
+                        request.StartDate = new DateTime(month.Year, month.Month, 1);
+                        plantResponse.AddRange(await _repository.GetRepliedDataListAsync(request));
+                        dailyPlantResponse.AddRange(await _repository.GetDailyRepliedDataAsync(request));
+                    }
+                }
 
                 if (plantResponse == null || !plantResponse.Any() || plantResponse.FirstOrDefault()?.metterList == null || !plantResponse.First().metterList.Any())
                 {
@@ -67,12 +82,13 @@ namespace er_transformer_proxy_int.BussinesLogic
 
                 // calculo de total_Cap
                 var dailyList = dailyPlantResponse.SelectMany(a => a.DayResume);
-                var totalLast = dailyList.First(a => a.CollectTime.Day == request.EndDate.Day).PVYield;
-                var totalFirst = dailyList.First(a => a.CollectTime.Day == request.StartDate.Day).PVYield;
-                double? totalCap = Math.Abs(totalLast - totalFirst ?? 0);
+
+                dailyList = request.RequestType == 1 ? dailyList.Where(a => a.CollectTime >= request.StartDate && a.CollectTime <= request.EndDate).ToList() : dailyList;
+
+                double? totalCap = dailyList.Sum(a => a.PVYield);
 
                 // calculo de campos finales
-                var avoidedEmisions = (totalCap / 1000) * factorEnergia;
+                var avoidedEmisions = Math.Round((totalCap ?? 0 / 1000) * factorEnergia, 2);
                 var energyCoverage = totalCap / reverActiveCap ?? 0;
                 var consumoSFV = totalCap - senderToCFE;
                 var totalRealConsumption = consumoSFV + reverActiveCap;
@@ -83,11 +99,11 @@ namespace er_transformer_proxy_int.BussinesLogic
                 commonTiles.Add(new CommonTileResponse { Title = "Last connection timeStamp", Value = DateTime.Now.ToString() });
                 commonTiles.Add(new CommonTileResponse { Title = "Life Time Energy Production", Value = Convert.ToString(totalCap) });
                 commonTiles.Add(new CommonTileResponse { Title = "Life Time Energy Consumption (CFE)", Value = Convert.ToString(Math.Abs(reverActiveCap ?? 0)) });
-                commonTiles.Add(new CommonTileResponse { Title = "Avoided Emmisions (tCO2e)", Value = Convert.ToString(Math.Abs(avoidedEmisions ?? 0)) });
+                commonTiles.Add(new CommonTileResponse { Title = "Avoided Emmisions (tCO2e)", Value = Convert.ToString(Math.Abs(avoidedEmisions)) });
                 commonTiles.Add(new CommonTileResponse { Title = "Energy Coverage", Value = Convert.ToString(Math.Abs(energyCoverage)) });
                 commonTiles.Add(new CommonTileResponse { Title = "Coincident Solar Consumption", Value = Convert.ToString(solarConsumption) });
                 commonTiles.Add(new CommonTileResponse { Title = "Solar Coverage", Value = Convert.ToString(solarcoverage) });
-                response.ErrorCode = 0;
+                response.ErrorCode = 200;
                 response.Success = true;
                 response.Data = commonTiles;
             }
@@ -225,6 +241,103 @@ namespace er_transformer_proxy_int.BussinesLogic
 
             return response;
         }
+
+        public async Task<ResponseModel<List<CommonTileResponse>>> GetGlobalSolarCoverage(RequestModel request)
+        {
+            var response = new ResponseModel<List<CommonTileResponse>> { ErrorCode = 401, Success = false };
+            var commonTiles = new List<CommonTileResponse>();
+
+            try
+            {
+                var clientsCode = await _repository.GetPlantCodeByclientNameAsync(request);
+
+                var plantResponse = new List<PlantDeviceResult>();
+                var dailyPlantResponse = new List<DayProjectResume>();
+
+                foreach (var item in clientsCode)
+                {
+                    request.PlantCode = item.PlantCode;
+                    plantResponse.AddRange(await _repository.GetRepliedDataListAsync(request));
+                    dailyPlantResponse.AddRange(await _repository.GetDailyRepliedDataAsync(request));
+                }
+
+                if (plantResponse == null || !plantResponse.Any() || plantResponse.FirstOrDefault()?.metterList == null || !plantResponse.First().metterList.Any())
+                {
+                    response.Success = false;
+                    commonTiles.Add(new CommonTileResponse { Title = "No hay datos en tiempo real para el periodo establecido", Value = DateTime.Now.ToString() });
+                    response.Data = commonTiles;
+                    response.ErrorCode = 204;
+                    response.ErrorMessage = "No hay datos en tiempo real para el periodo establecido";
+                    return response;
+                }
+
+                if (dailyPlantResponse == null || !dailyPlantResponse.Any() || dailyPlantResponse.FirstOrDefault()?.DayResume == null || !dailyPlantResponse.First().DayResume.Any())
+                {
+                    response.Success = false;
+                    commonTiles.Add(new CommonTileResponse { Title = "No hay datos diarios para el periodo establecido", Value = DateTime.Now.ToString() });
+                    response.Data = commonTiles;
+                    response.ErrorCode = 204;
+                    response.ErrorMessage = "No hay datos diarios para el periodo establecido";
+                    return response;
+                }
+
+                var plantResponseGroup = plantResponse.GroupBy(a => a.stationCode);
+                var dailyPlantResponseGroup = dailyPlantResponse.GroupBy(a => a.stationCode);
+
+                decimal solarcoverageTotal = 0;
+                double avoidedEmisionsTotal = 0;
+                foreach (var item in plantResponseGroup)
+                {
+                    // Asegurarse de tener el primero y el último registro correctamente
+                    var firstRecord = item.OrderBy(a => a.repliedDateTime).FirstOrDefault();
+                    var lastRecord = item.OrderBy(a => a.repliedDateTime).LastOrDefault();
+
+                    if (firstRecord == null || lastRecord == null)
+                    {
+                        response.ErrorCode = 204;
+                        response.ErrorMessage = "No hay registros válidos para el periodo establecido";
+                        return response;
+                    }
+
+                    // la diferencia es el ultimo menos el primero, lo cual nos da lo que se genero en el intervalo de tiempo de request
+                    var reverActiveCap = lastRecord.metterList.Sum(a => a.dataItemMap.reverse_active_cap) - firstRecord.metterList.Sum(a => a.dataItemMap.reverse_active_cap);
+                    var senderToCFE = lastRecord.metterList.Sum(a => a.dataItemMap.active_cap) - firstRecord.metterList.Sum(a => a.dataItemMap.active_cap);
+
+                    // calculo de total_Cap
+                    // calculo de total_Cap
+                    var dailyList = dailyPlantResponse.SelectMany(a => a.DayResume);
+
+                    dailyList = request.RequestType == 1 ? dailyList.Where(a => a.CollectTime >= request.StartDate && a.CollectTime <= request.EndDate).ToList() : dailyList;
+
+                    double? totalCap = dailyList.Sum(a => a.PVYield);
+
+                    // calculo de campos finales
+
+                    avoidedEmisionsTotal += (totalCap ?? 0 / 1000) * factorEnergia;
+                    var consumoSFV = totalCap - senderToCFE;
+                    var totalRealConsumption = consumoSFV + reverActiveCap;
+                    var solarcoverageOperation = (totalCap / totalRealConsumption) * 100;
+                    solarcoverageTotal += (decimal?)solarcoverageOperation ?? 0;
+                }
+
+                // realizamos el mapeo de cada tile a devolver
+                commonTiles.Add(new CommonTileResponse { Title = "Solar Coverage", Value = Convert.ToString(solarcoverageTotal) });
+                commonTiles.Add(new CommonTileResponse { Title = "CO2 Savings", Value = Convert.ToString(avoidedEmisionsTotal) });
+
+                response.ErrorCode = 0;
+                response.Success = true;
+                response.Data = commonTiles;
+            }
+            catch (Exception ex)
+            {
+                response.ErrorCode = 500;
+                response.Success = false;
+                response.ErrorMessage = $"Error al procesar los datos: {ex.Message}";
+            }
+
+            return response;
+        }
+
 
         public async Task<bool> ReplicateToMongoDb()
         {
