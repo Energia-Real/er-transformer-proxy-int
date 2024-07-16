@@ -29,12 +29,7 @@ namespace er_transformer_proxy_int.BussinesLogic
                 var plantResponse = new List<PlantDeviceResult>();
                 var dailyPlantResponse = new List<DayProjectResume>();
 
-                if (request.RequestType == 1)
-                {
-                    plantResponse.AddRange(await _repository.GetRepliedDataListAsync(request));
-                    dailyPlantResponse.AddRange(await _repository.GetDailyRepliedDataAsync(request));
-                }
-                else if (request.RequestType == 2)
+                if (request.RequestType == 2)
                 {
                     foreach (var month in request.Months)
                     {
@@ -42,6 +37,12 @@ namespace er_transformer_proxy_int.BussinesLogic
                         plantResponse.AddRange(await _repository.GetRepliedDataListAsync(request));
                         dailyPlantResponse.AddRange(await _repository.GetDailyRepliedDataAsync(request));
                     }
+                }
+                else
+                {
+
+                    plantResponse.AddRange(await _repository.GetRepliedDataListAsync(request));
+                    dailyPlantResponse.AddRange(await _repository.GetDailyRepliedDataAsync(request));
                 }
 
                 if (plantResponse == null || !plantResponse.Any() || plantResponse.FirstOrDefault()?.metterList == null || !plantResponse.First().metterList.Any())
