@@ -78,7 +78,6 @@ namespace er_transformer_proxy_int.BussinesLogic
 
                 // la diferencia es el ultimo menos el primero, lo cual nos da lo que se genero en el intervalo de tiempo de request
                 var reverActiveCap = lastRecord.metterList.Sum(a => a.dataItemMap.reverse_active_cap) - firstRecord.metterList.Sum(a => a.dataItemMap.reverse_active_cap);
-                var solarConsumption = lastRecord.metterList.Sum(a => a.dataItemMap.total_apparent_power);
                 var senderToCFE = lastRecord.metterList.Sum(a => a.dataItemMap.active_cap) - firstRecord.metterList.Sum(a => a.dataItemMap.active_cap);
 
                 // calculo de total_Cap
@@ -90,7 +89,10 @@ namespace er_transformer_proxy_int.BussinesLogic
 
                 // calculo de campos finales
                 var avoidedEmisions = Math.Round((totalCap ?? 0 / 1000) * factorEnergia, 2);
+
+                // validar donde se utiliza
                 var energyCoverage = totalCap / reverActiveCap ?? 0;
+
                 var consumoSFV = totalCap - senderToCFE;
                 var totalRealConsumption = consumoSFV + reverActiveCap;
                 var solarcoverageOperation = (totalCap / totalRealConsumption) * 100;
@@ -99,10 +101,10 @@ namespace er_transformer_proxy_int.BussinesLogic
                 // realizamos el mapeo de cada tile a devolver
                 commonTiles.Add(new CommonTileResponse { Title = "Last connection timeStamp", Value = DateTime.Now.ToString() });
                 commonTiles.Add(new CommonTileResponse { Title = "Life Time Energy Production", Value = Convert.ToString(totalCap) });
-                commonTiles.Add(new CommonTileResponse { Title = "Life Time Energy Consumption (CFE)", Value = Convert.ToString(Math.Abs(reverActiveCap ?? 0)) });
-                commonTiles.Add(new CommonTileResponse { Title = "Avoided Emmisions (tCO2e)", Value = Convert.ToString(Math.Abs(avoidedEmisions)) });
-                commonTiles.Add(new CommonTileResponse { Title = "Energy Coverage", Value = Convert.ToString(Math.Abs(energyCoverage)) });
-                commonTiles.Add(new CommonTileResponse { Title = "Coincident Solar Consumption", Value = Convert.ToString(solarConsumption) });
+                commonTiles.Add(new CommonTileResponse { Title = "Life Time Energy Consumption (CFE)", Value = Convert.ToString(reverActiveCap ?? 0) });
+                commonTiles.Add(new CommonTileResponse { Title = "Avoided Emmisions (tCO2e)", Value = Convert.ToString(avoidedEmisions) });
+                commonTiles.Add(new CommonTileResponse { Title = "Energy Coverage", Value = Convert.ToString(energyCoverage) });
+                commonTiles.Add(new CommonTileResponse { Title = "Coincident Solar Consumption", Value = Convert.ToString(consumoSFV) });
                 commonTiles.Add(new CommonTileResponse { Title = "Solar Coverage", Value = Convert.ToString(solarcoverage) });
                 response.ErrorCode = 200;
                 response.Success = true;
