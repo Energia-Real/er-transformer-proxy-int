@@ -31,12 +31,12 @@ namespace er_transformer_proxy_int.BussinesLogic
 
                 if (request.RequestType == 2)
                 {
-                    foreach (var month in request.Months)
-                    {
-                        request.StartDate = new DateTime(month.Year, month.Month, 1);
-                        plantResponse.AddRange(await _repository.GetRepliedDataListAsync(request));
-                        dailyPlantResponse.AddRange(await _repository.GetDailyRepliedDataAsync(request));
-                    }
+
+                    request.StartDate = request.Months.OrderBy(a => a.Month).First();
+                    request.EndDate = request.Months.OrderBy(a => a.Month).LastOrDefault();
+                    plantResponse.AddRange(await _repository.GetRepliedDataListAsync(request));
+                    dailyPlantResponse.AddRange(await _repository.GetDailyRepliedDataAsync(request));
+
                 }
                 else
                 {

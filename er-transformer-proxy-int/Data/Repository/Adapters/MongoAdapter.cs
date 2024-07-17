@@ -111,12 +111,12 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
 
                 // Crear un filtro básico con las condiciones existentes
                 var filters = new List<FilterDefinition<PlantDeviceResult>>
-        {
-            Builders<PlantDeviceResult>.Filter.Eq("brandName", request.Brand.ToLower()),
-            Builders<PlantDeviceResult>.Filter.Eq("stationCode", request.PlantCode),
-            Builders<PlantDeviceResult>.Filter.Ne("invertersList", new List<DeviceDataResponse<DeviceInverterDataItem>>()),
-            Builders<PlantDeviceResult>.Filter.Ne("metterList", new List<DeviceDataResponse<DeviceMetterDataItem>>())
-        };
+                {
+                    Builders<PlantDeviceResult>.Filter.Eq("brandName", request.Brand.ToLower()),
+                    Builders<PlantDeviceResult>.Filter.Eq("stationCode", request.PlantCode),
+                    Builders<PlantDeviceResult>.Filter.Ne("invertersList", new List<DeviceDataResponse<DeviceInverterDataItem>>()),
+                    Builders<PlantDeviceResult>.Filter.Ne("metterList", new List<DeviceDataResponse<DeviceMetterDataItem>>())
+                };
 
                 // Agregar filtro por fecha para abarcar todo el mes si StartDate no es el valor mínimo
 
@@ -124,8 +124,6 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
 
                 var endDate = new DateTime(request.EndDate.Year, request.EndDate.Month, request.EndDate.Day, 23, 59, 59, 999, DateTimeKind.Utc);
 
-                endDate = request.RequestType == 1 ? endDate : new DateTime(request.StartDate.Year, request.StartDate.Month, DateTime.DaysInMonth(request.StartDate.Year, request.StartDate.Month), 23, 59, 59, 999, DateTimeKind.Utc);
-                
                 filters.Add(Builders<PlantDeviceResult>.Filter.Gte("repliedDateTime", startDate));
                 filters.Add(Builders<PlantDeviceResult>.Filter.Lte("repliedDateTime", endDate));
 
