@@ -246,7 +246,7 @@ namespace er_transformer_proxy_int.BussinesLogic
         }
 
         public async Task<ResponseModel<List<CommonTileResponse>>> GetGlobalSolarCoverage(RequestModel request)
-        {
+         {
             var response = new ResponseModel<List<CommonTileResponse>> { ErrorCode = 401, Success = false };
             var commonTiles = new List<CommonTileResponse>();
 
