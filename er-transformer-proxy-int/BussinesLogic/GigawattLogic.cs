@@ -246,7 +246,7 @@ namespace er_transformer_proxy_int.BussinesLogic
         }
 
         public async Task<ResponseModel<List<CommonTileResponse>>> GetGlobalSolarCoverage(RequestModel request)
-         {
+        {
             var response = new ResponseModel<List<CommonTileResponse>> { ErrorCode = 401, Success = false };
             var commonTiles = new List<CommonTileResponse>();
 
@@ -324,8 +324,8 @@ namespace er_transformer_proxy_int.BussinesLogic
                 }
 
                 // realizamos el mapeo de cada tile a devolver
-                commonTiles.Add(new CommonTileResponse { Title = "Solar Coverage", Value = Convert.ToString(solarcoverageTotal) });
-                commonTiles.Add(new CommonTileResponse { Title = "CO2 Savings", Value = Convert.ToString(avoidedEmisionsTotal) });
+                commonTiles.Add(new CommonTileResponse { Title = "Solar Coverage", Value = Convert.ToString(Math.Round(solarcoverageTotal, 2)) });
+                commonTiles.Add(new CommonTileResponse { Title = "CO2 Savings", Value = Convert.ToString(Math.Round(avoidedEmisionsTotal, 2)) });
 
                 response.ErrorCode = 0;
                 response.Success = true;
