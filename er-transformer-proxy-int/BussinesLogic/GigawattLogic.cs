@@ -91,19 +91,12 @@ namespace er_transformer_proxy_int.BussinesLogic
                 var avoidedEmisions = Math.Round((totalCap ?? 0 / 1000) * factorEnergia, 2);
 
                 // validar donde se utiliza
-                //var energyCoverage = totalCap / reverActiveCap ?? 0;
-
-
+                var energyCoverage = totalCap / reverActiveCap ?? 0;
 
                 var consumoSFV = totalCap - senderToCFE;
                 var totalRealConsumption = consumoSFV + reverActiveCap;
                 var solarcoverageOperation = (totalCap / totalRealConsumption) * 100;
                 var solarcoverage = Math.Round((decimal?)solarcoverageOperation ?? 0, 2);
-
-                //nuevo calculo para energyCoverage
-                //nuevo calculo para energyCoverage
-                var energyCoverage = (decimal)(dailyList.Last().PVYield / (totalCap + reverActiveCap));
-                  
 
                 // realizamos el mapeo de cada tile a devolver
                 commonTiles.Add(new CommonTileResponse { Title = "Last connection timeStamp", Value = DateTime.Now.ToString() });
