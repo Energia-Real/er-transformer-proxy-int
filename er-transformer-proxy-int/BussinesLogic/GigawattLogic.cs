@@ -110,7 +110,7 @@ namespace er_transformer_proxy_int.BussinesLogic
                 commonTiles.Add(new CommonTileResponse { Title = "Energy Production", Value = Convert.ToString(Math.Round(totalCap ?? 0, 2)) });
                 commonTiles.Add(new CommonTileResponse { Title = "Energy Consumption (CFE)", Value = Convert.ToString(Math.Abs(reverActiveCap ?? 0)) });
                 commonTiles.Add(new CommonTileResponse { Title = "Avoided Emmisions (tCO2e)", Value = Convert.ToString(Math.Round(avoidedEmisions, 2)) });
-                commonTiles.Add(new CommonTileResponse { Title = "Energy Coverage", Value = Convert.ToString(Math.Round(energyCoverage, 2)) });
+                //commonTiles.Add(new CommonTileResponse { Title = "Energy Coverage", Value = Convert.ToString(Math.Round(energyCoverage, 2)) });
                 commonTiles.Add(new CommonTileResponse { Title = "Coincident Solar Consumption", Value = Convert.ToString(Math.Round(consumoSFV ?? 0, 2)) });
                 commonTiles.Add(new CommonTileResponse { Title = "Solar Coverage", Value = Convert.ToString(solarcoverage) });
                 response.ErrorCode = 200;
