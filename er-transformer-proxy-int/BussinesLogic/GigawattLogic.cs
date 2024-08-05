@@ -319,7 +319,7 @@ namespace er_transformer_proxy_int.BussinesLogic
                     avoidedEmisionsTotal += (totalCap ?? 0 / 1000) * factorEnergia;
                     var consumoSFV = totalCap - senderToCFE;
                     var totalRealConsumption = consumoSFV + reverActiveCap;
-                    var solarcoverageOperation = (totalCap / totalRealConsumption) * 10; //validar esta operacion
+                    var solarcoverageOperation = (totalCap / (totalCap + reverActiveCap)) * 10; //validar esta operacion
                     solarcoverageTotal += (decimal?)solarcoverageOperation ?? 0;
                 }
 
