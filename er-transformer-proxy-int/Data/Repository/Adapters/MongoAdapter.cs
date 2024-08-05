@@ -182,7 +182,7 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
                 var startMonth = request.Months.OrderBy(a => a.Month).First();
                 var endMonth = request.Months.OrderBy(a => a.Month).Last();
                 var startDate = request.RequestType == 2 ? new DateTime(startMonth.Year, startMonth.Month, startMonth.Day, 0, 0, 0, DateTimeKind.Utc) : new DateTime(request.StartDate.Year, request.StartDate.Month, request.StartDate.Day, 0, 0, 0, DateTimeKind.Utc);
-                var endDate = new DateTime(request.EndDate.Year, request.EndDate.Month, DateTime.DaysInMonth(request.EndDate.Year, request.EndDate.Month), 23, 59, 59, 999, DateTimeKind.Utc);
+                var endDate = request.RequestType == 2 ? new DateTime(endMonth.Year, endMonth.Month, DateTime.DaysInMonth(endMonth.Year, endMonth.Month), 23, 59, 59, 999, DateTimeKind.Utc) : new DateTime(request.EndDate.Year, request.EndDate.Month, request.EndDate.Day, 23, 59, 59, 999, DateTimeKind.Utc);
 
                 filters.Add(Builders<DayProjectResume>.Filter.Gte("repliedDateTime", startDate));
                 filters.Add(Builders<DayProjectResume>.Filter.Lte("repliedDateTime", endDate));
