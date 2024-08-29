@@ -342,6 +342,61 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
             }
         }
 
+
+        public async Task<List<MonthProjectResume>> UpdateMonthResume(RequestModel? request)
+        {
+            var collection = _database.GetCollection<MonthProjectResume>("RepliMonthProjectResume");
+            var logCollection = _database.GetCollection<UpdateLog>("UpdateLogs");
+
+            // Construir el filtro para encontrar el documento correcto
+            var filter = Builders<MonthProjectResume>.Filter.And(
+                Builders<MonthProjectResume>.Filter.Eq(x => x.stationCode, request.StationCode),
+                Builders<MonthProjectResume>.Filter.ElemMatch(x => x.Monthresume, mr => mr.CollectTime == request.CollectTime)
+            );
+
+            // Obtener el documento original para registrar el valor anterior
+            var originalDocument = await collection.Find(filter).FirstOrDefaultAsync();
+            if (originalDocument == null)
+            {
+                // Si no se encuentra el documento, retornar una lista vacía
+                return new List<MonthProjectResume>();
+            }
+
+            // Obtener el valor anterior de DataRecovery
+            var oldValue = originalDocument.Monthresume
+                .FirstOrDefault(mr => mr.CollectTime == request.CollectTime)?.DataRecovery;
+
+            // Construir la actualización para modificar el campo DataRecovery
+            var update = Builders<MonthProjectResume>.Update.Set("Monthresume.$.DataRecovery", request.InverterPower);
+
+            // Ejecutar la actualización
+            var updateResult = await collection.UpdateOneAsync(filter, update);
+
+            if (updateResult.ModifiedCount == 0)
+            {
+                // Si no se modificó ningún documento, retornar una lista vacía
+                return new List<MonthProjectResume>();
+            }
+
+            // Registrar el cambio en la nueva colección
+            var updateLog = new UpdateLog
+            {
+                DateNow = DateTime.Now,
+                StationCode = request.StationCode,
+                OldValue = oldValue,
+                NewValue = request.InverterPower//nuevos valores
+            };
+            await logCollection.InsertOneAsync(updateLog);
+
+            // Recuperar el documento actualizado para devolverlo
+            var updatedDocument = await collection.Find(filter).ToListAsync();
+            return updatedDocument;
+        }
+
+
+
+
+
         public async Task<HealtCheckModel> GetHealtCheackAsync(RequestModel request)
         {
             try

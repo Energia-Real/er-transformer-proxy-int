@@ -199,6 +199,36 @@
             .WithOpenApi();
         }
 
+        private static void UpdateMonthProyectResume(RouteGroupBuilder rgb)
+        {
+            rgb.MapPost("UpdateMonthProyectResume", async (HttpContext context, [FromBody] RequestModel? request) =>
+            {
+                try
+                {
+                    // Ajustar el CollectTime antes de pasar el request a la lógica
+                    request.CollectTime = $"{request.CollectTime}-07T12:00:00.000+00:00";
+
+                    var resumeResult = await bussineslogic.UpdateMonthResume(request);
+                    if (!resumeResult.Any())
+                    {
+                        return Results.NoContent();
+                    }
+
+                    return Results.Ok(request); // Devolviendo el mismo objeto que el request
+                }
+                catch (Exception ex)
+                {
+                    return Results.BadRequest(ex);
+                }
+            })
+            .Produces(200)
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("UpdateMonthProyectResume")
+            .WithOpenApi();
+        }
+
+
         private static void GetGlobalSolarCoverage(RouteGroupBuilder rgb)
         {
             rgb.MapPost("GetGlobalSolarCoverage", async (HttpContext context, [FromBody] RequestModel? request) =>

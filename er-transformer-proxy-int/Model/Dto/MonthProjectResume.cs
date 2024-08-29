@@ -25,4 +25,24 @@ namespace er_transformer_proxy_int.Model.Dto
 
         public List<T> Resume { get; set; }
     }
+
+    // Definición del modelo para la nueva tabla (bitacora) en MongoDB
+    public class UpdateLog
+    {
+        [BsonId]
+        public ObjectId Id { get; set; }
+
+        [BsonElement("DateNow")]
+        public DateTime DateNow { get; set; }
+
+        [BsonElement("StationCode")]
+        public string StationCode { get; set; }
+
+        [BsonElement("OldValue")]
+        public double? OldValue { get; set; }
+
+        [BsonElement("NewValue")]
+        public double? NewValue { get; set; }//nombre de coleccion y campo a impactar usuario preguntar a aaron
+    }
 }
+
