@@ -4,6 +4,7 @@
     using er_transformer_proxy_int.Model;
     using er_transformer_proxy_int.Model.Gigawatt;
     using er_transformer_proxy_int.Model.Huawei;
+    using er_transformer_proxy_int.Model.Request;
     using er_transformer_proxy_int.Services.Interfaces;
     using Microsoft.AspNetCore.Mvc;
 
@@ -26,6 +27,7 @@
             GetStationHealtCheck(routeBuilder);
             GetInstalledCapacity(routeBuilder);
             GetMonthProyectResume(routeBuilder);
+            UpdateMonthProyectResume(routeBuilder);
             ReplicateToMongoDb(routeBuilder);
             ReplicateMonthProjectResumeToMongoDb(routeBuilder);
             ReplicateDayProjectResumeToMongoDb(routeBuilder);
@@ -201,15 +203,12 @@
 
         private static void UpdateMonthProyectResume(RouteGroupBuilder rgb)
         {
-            rgb.MapPost("UpdateMonthProyectResume", async (HttpContext context, [FromBody] RequestModel? request) =>
+            rgb.MapPost("UpdateMonthProyectResume", async (HttpContext context, [FromBody] RequestUpdateData? request) =>
             {
                 try
                 {
-                    // Ajustar el CollectTime antes de pasar el request a la lógica
-                    request.CollectTime = $"{request.CollectTime}-07T12:00:00.000+00:00";
-
                     var resumeResult = await bussineslogic.UpdateMonthResume(request);
-                    if (!resumeResult.Any())
+                    if (resumeResult is null)
                     {
                         return Results.NoContent();
                     }

@@ -1,4 +1,4 @@
-﻿namespace er_transformer_proxy_int.Model
+﻿namespace er_transformer_proxy_int.Model.Request
 {
     public class RequestModel
     {

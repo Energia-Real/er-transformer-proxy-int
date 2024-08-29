@@ -10,6 +10,7 @@ using MoreLinq;
 using System.Text;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Connections.Features;
+using er_transformer_proxy_int.Model.Request;
 
 namespace er_transformer_proxy_int.BussinesLogic
 {
@@ -243,6 +244,26 @@ namespace er_transformer_proxy_int.BussinesLogic
             }
 
             return response;
+        }
+
+        public async Task<RequestUpdateData> UpdateMonthResume(RequestUpdateData? request)
+        {
+            if (request is null)
+            {
+                return new RequestUpdateData();
+            }
+            var response = await this._repository.UpdateMonthResume(request);
+
+            // agregar mapeo a nuevo objeto
+            var filterResponse = response.First(a => a.stationCode == request.StationCode).Monthresume.First(b => b.CollectTime.Month == request.CollectTime.Month); ;
+            var result = new RequestUpdateData
+            {
+                CollectTime = request.CollectTime,
+                InverterPower = filterResponse.DataRecovery ?? 0,
+                StationCode = request.StationCode,
+            };
+
+            return result;
         }
 
         public async Task<ResponseModel<List<CommonTileResponse>>> GetGlobalSolarCoverage(RequestModel request)

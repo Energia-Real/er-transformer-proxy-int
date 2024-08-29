@@ -2,6 +2,7 @@
 using er_transformer_proxy_int.Model;
 using er_transformer_proxy_int.Model.Dto;
 using er_transformer_proxy_int.Model.Huawei;
+using er_transformer_proxy_int.Model.Request;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
@@ -343,9 +344,9 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
         }
 
 
-        public async Task<List<MonthProjectResume>> UpdateMonthResume(RequestModel? request)
+        public async Task<List<MonthProjectResume>> UpdateMonthResume(RequestUpdateData? request)
         {
-            var collection = _database.GetCollection<MonthProjectResume>("RepliMonthProjectResume");
+            var collection = _database.GetCollection<MonthProjectResume>("CollectionPruebasUpdate");
             var logCollection = _database.GetCollection<UpdateLog>("UpdateLogs");
 
             // Construir el filtro para encontrar el documento correcto
@@ -392,10 +393,6 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
             var updatedDocument = await collection.Find(filter).ToListAsync();
             return updatedDocument;
         }
-
-
-
-
 
         public async Task<HealtCheckModel> GetHealtCheackAsync(RequestModel request)
         {

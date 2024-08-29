@@ -42,7 +42,7 @@ namespace er_transformer_proxy_int.Model.Dto
         public double? OldValue { get; set; }
 
         [BsonElement("NewValue")]
-        public double? NewValue { get; set; }//nombre de coleccion y campo a impactar usuario preguntar a aaron
+        public double NewValue { get; set; }//nombre de coleccion y campo a impactar usuario preguntar a aaron
     }
 }
 
