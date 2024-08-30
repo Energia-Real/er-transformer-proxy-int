@@ -246,25 +246,47 @@ namespace er_transformer_proxy_int.BussinesLogic
             return response;
         }
 
-        public async Task<RequestUpdateData> UpdateMonthResume(RequestUpdateData? request)
+        public async Task<string> UpdateMonthResume(RequestUpdateData? request)
         {
             if (request is null)
             {
-                return new RequestUpdateData();
+                return "Request data is null."; // Mensaje de error si la solicitud es nula.
             }
-            var response = await this._repository.UpdateMonthResume(request);
 
-            // agregar mapeo a nuevo objeto
-            var filterResponse = response.First(a => a.stationCode == request.StationCode).Monthresume.First(b => b.CollectTime.Month == request.CollectTime.Month); ;
-            var result = new RequestUpdateData
+            try
             {
-                CollectTime = request.CollectTime,
-                InverterPower = filterResponse.DataRecovery ?? 0,
-                StationCode = request.StationCode,
-            };
+                // Ajustar el CollectTime para que incluya la hora y zona horaria.
+                if (request.CollectTime != default)
+                {
+                    request.CollectTime = DateTime.SpecifyKind(request.CollectTime.Date.AddHours(12), DateTimeKind.Utc);
+                }
 
-            return result;
+                var updateResult = await this._repository.UpdateMonthResume(request);
+
+                var filterResponse = updateResult
+                    .FirstOrDefault(a => a.stationCode == request.PlantCode)?
+                    .Monthresume
+                    .FirstOrDefault(b => b.CollectTime.Month == request.CollectTime.Month);
+
+                if (filterResponse is null)
+                {
+                    // Si no se encuentra el registro, significa que fue creado.
+                    return "Data has been created successfully.";
+                }
+                else
+                {
+                    // Si se encuentra el registro, significa que fue actualizado.
+                    return "Data has been updated successfully.";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Manejar la excepción según sea necesario y retornar un mensaje de error.
+                Console.WriteLine($"Error during UpdateMonthResume: {ex.Message}");
+                return "An error occurred during the update process.";
+            }
         }
+
 
         public async Task<ResponseModel<List<CommonTileResponse>>> GetGlobalSolarCoverage(RequestModel request)
         {

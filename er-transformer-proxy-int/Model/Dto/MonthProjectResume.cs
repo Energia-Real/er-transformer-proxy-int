@@ -35,8 +35,8 @@ namespace er_transformer_proxy_int.Model.Dto
         [BsonElement("DateNow")]
         public DateTime DateNow { get; set; }
 
-        [BsonElement("StationCode")]
-        public string StationCode { get; set; }
+        [BsonElement("PlantCode")]
+        public string PlantCode { get; set; }
 
         [BsonElement("OldValue")]
         public double? OldValue { get; set; }

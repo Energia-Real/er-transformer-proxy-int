@@ -346,12 +346,12 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
 
         public async Task<List<MonthProjectResume>> UpdateMonthResume(RequestUpdateData? request)
         {
-            var collection = _database.GetCollection<MonthProjectResume>("CollectionPruebasUpdate");
+            var collection = _database.GetCollection<MonthProjectResume>("RepliMonthProjectResume");
             var logCollection = _database.GetCollection<UpdateLog>("UpdateLogs");
 
             // Construir el filtro para encontrar el documento correcto
             var filter = Builders<MonthProjectResume>.Filter.And(
-                Builders<MonthProjectResume>.Filter.Eq(x => x.stationCode, request.StationCode),
+                Builders<MonthProjectResume>.Filter.Eq(x => x.stationCode, request.PlantCode),
                 Builders<MonthProjectResume>.Filter.ElemMatch(x => x.Monthresume, mr => mr.CollectTime == request.CollectTime)
             );
 
@@ -383,7 +383,7 @@ namespace er_transformer_proxy_int.Data.Repository.Adapters
             var updateLog = new UpdateLog
             {
                 DateNow = DateTime.Now,
-                StationCode = request.StationCode,
+                PlantCode = request.PlantCode,
                 OldValue = oldValue,
                 NewValue = request.InverterPower//nuevos valores
             };

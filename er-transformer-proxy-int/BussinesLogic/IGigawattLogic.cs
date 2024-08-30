@@ -14,7 +14,8 @@ namespace er_transformer_proxy_int.BussinesLogic
 
         Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(RequestModel request);
         Task<ResponseModel<List<CommonTileResponse>>> GetStationCapacity(RequestModel request);
-        Task<RequestUpdateData> UpdateMonthResume(RequestUpdateData? request);
+        Task<string> UpdateMonthResume(RequestUpdateData? request);
+
 
         Task<List<MonthProjectResume>> GetMonthResume(RequestModel? request);
 

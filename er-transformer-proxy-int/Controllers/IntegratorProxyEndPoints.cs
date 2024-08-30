@@ -207,17 +207,16 @@
             {
                 try
                 {
-                    var resumeResult = await bussineslogic.UpdateMonthResume(request);
-                    if (resumeResult is null)
-                    {
-                        return Results.NoContent();
-                    }
+                    // Llamar al método UpdateMonthResume y obtener el mensaje
+                    var mensaje = await bussineslogic.UpdateMonthResume(request);
 
-                    return Results.Ok(request); // Devolviendo el mismo objeto que el request
+                    // Devolver el mensaje como respuesta
+                    return Results.Ok(mensaje); // Devolviendo solo el mensaje en lugar del objeto
                 }
                 catch (Exception ex)
                 {
-                    return Results.BadRequest(ex);
+                    // Manejar la excepción y devolver un mensaje de error
+                    return Results.BadRequest(new { error = "An error occurred during the update process.", details = ex.Message });
                 }
             })
             .Produces(200)
@@ -226,6 +225,7 @@
             .WithName("UpdateMonthProyectResume")
             .WithOpenApi();
         }
+
 
 
         private static void GetGlobalSolarCoverage(RouteGroupBuilder rgb)
