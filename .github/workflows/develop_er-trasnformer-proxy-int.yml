@@ -24,6 +24,9 @@ jobs:
           dotnet-version: '8.x'
           include-prerelease: true
 
+      - name: List Files
+        run: ls -R .
+        
       - name: Build with dotnet
         run: dotnet build --configuration Release
 
