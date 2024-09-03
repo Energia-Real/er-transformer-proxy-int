@@ -2,6 +2,7 @@
 using er_transformer_proxy_int.Model;
 using er_transformer_proxy_int.Model.Huawei;
 using er_transformer_proxy_int.Model.Dto;
+using er_transformer_proxy_int.Model.Request;
 
 namespace er_transformer_proxy_int.BussinesLogic
 {
@@ -13,6 +14,8 @@ namespace er_transformer_proxy_int.BussinesLogic
 
         Task<ResponseModel<HealtCheckModel>> GetStationHealtCheck(RequestModel request);
         Task<ResponseModel<List<CommonTileResponse>>> GetStationCapacity(RequestModel request);
+        Task<string> UpdateMonthResume(RequestUpdateData? request);
+
 
         Task<List<MonthProjectResume>> GetMonthResume(RequestModel? request);
 

@@ -4,6 +4,7 @@
     using er_transformer_proxy_int.Model;
     using er_transformer_proxy_int.Model.Gigawatt;
     using er_transformer_proxy_int.Model.Huawei;
+    using er_transformer_proxy_int.Model.Request;
     using er_transformer_proxy_int.Services.Interfaces;
     using Microsoft.AspNetCore.Mvc;
 
@@ -26,6 +27,7 @@
             GetStationHealtCheck(routeBuilder);
             GetInstalledCapacity(routeBuilder);
             GetMonthProyectResume(routeBuilder);
+            UpdateMonthProyectResume(routeBuilder);
             ReplicateToMongoDb(routeBuilder);
             ReplicateMonthProjectResumeToMongoDb(routeBuilder);
             ReplicateDayProjectResumeToMongoDb(routeBuilder);
@@ -198,6 +200,33 @@
             .WithName("GetMonthProyectResume")
             .WithOpenApi();
         }
+
+        private static void UpdateMonthProyectResume(RouteGroupBuilder rgb)
+        {
+            rgb.MapPost("UpdateMonthProyectResume", async (HttpContext context, [FromBody] RequestUpdateData? request) =>
+            {
+                try
+                {
+                    // Llamar al método UpdateMonthResume y obtener el mensaje
+                    var mensaje = await bussineslogic.UpdateMonthResume(request);
+
+                    // Devolver el mensaje como respuesta
+                    return Results.Ok(mensaje); // Devolviendo solo el mensaje en lugar del objeto
+                }
+                catch (Exception ex)
+                {
+                    // Manejar la excepción y devolver un mensaje de error
+                    return Results.BadRequest(new { error = "An error occurred during the update process.", details = ex.Message });
+                }
+            })
+            .Produces(200)
+            .Produces(204)
+            .WithTags("Proxy")
+            .WithName("UpdateMonthProyectResume")
+            .WithOpenApi();
+        }
+
+
 
         private static void GetGlobalSolarCoverage(RouteGroupBuilder rgb)
         {

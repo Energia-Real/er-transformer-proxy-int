@@ -1,6 +1,6 @@
-﻿using er_transformer_proxy_int.Model;
-using er_transformer_proxy_int.Model.Dto;
+﻿using er_transformer_proxy_int.Model.Dto;
 using er_transformer_proxy_int.Model.Huawei;
+using er_transformer_proxy_int.Model.Request;
 
 namespace er_transformer_proxy_int.Data.Repository.Interfaces
 {
@@ -13,6 +13,7 @@ namespace er_transformer_proxy_int.Data.Repository.Interfaces
         Task<List<PlantDto>> GetPlantListAsync();
         Task<List<PlantDto>> GetPlantCodeByclientNameAsync(RequestModel request);
         Task<List<MonthProjectResume>> GetMonthProjectResumesAsync(RequestModel? requestModel);
+        Task<List<MonthProjectResume>> UpdateMonthResume(RequestUpdateData? request);
 
         Task<HealtCheckModel> GetHealtCheackAsync(RequestModel request);
 

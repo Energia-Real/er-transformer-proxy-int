@@ -1,6 +1,6 @@
 ﻿namespace er_transformer_proxy_int.Controllers
 {
-    using er_transformer_proxy_int.Model;
+    using er_transformer_proxy_int.Model.Request;
     using er_transformer_proxy_int.Services.Interfaces;
     using Microsoft.AspNetCore.Mvc;
 
