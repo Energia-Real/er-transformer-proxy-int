@@ -293,7 +293,7 @@ namespace er_transformer_proxy_int.BussinesLogic
                 {
                     // Asegurarse de tener el primero y el último registro correctamente
                     var firstRecord = item.OrderBy(a => a.repliedDateTime).FirstOrDefault();
-                    var lastRecord = item.OrderBy(a => a.repliedDateTime).LastOrDefault();
+                    var lastRecord = plantResponse.OrderBy(a => a.repliedDateTime).LastOrDefault(a => a.metterList.First().dataItemMap.reverse_active_cap is not null);
 
                     if (firstRecord == null || lastRecord == null)
                     {
@@ -307,7 +307,6 @@ namespace er_transformer_proxy_int.BussinesLogic
                     var senderToCFE = lastRecord.metterList.Sum(a => a.dataItemMap.active_cap) - firstRecord.metterList.Sum(a => a.dataItemMap.active_cap);
 
                     // calculo de total_Cap
-                    // calculo de total_Cap
                     var dailyList = dailyPlantResponse.SelectMany(a => a.DayResume);
 
                     dailyList = request.RequestType == 1 ? dailyList.Where(a => a.CollectTime >= request.StartDate && a.CollectTime <= request.EndDate).ToList() : dailyList;
@@ -315,8 +314,7 @@ namespace er_transformer_proxy_int.BussinesLogic
                     double? totalCap = dailyList.Sum(a => a.PVYield);
 
                     // calculo de campos finales
-
-                    avoidedEmisionsTotal += (totalCap ?? 0 / 1000) * factorEnergia;
+                    avoidedEmisionsTotal += (totalCap ?? 0 / 1000) * factorEnergia/1000;
                     var consumoSFV = totalCap - senderToCFE;
                     var totalRealConsumption = consumoSFV + reverActiveCap;
                     var solarcoverageOperation = (totalCap / (totalCap + reverActiveCap)) * 10; //validar esta operacion

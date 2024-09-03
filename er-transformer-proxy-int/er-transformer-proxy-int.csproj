@@ -20,6 +20,7 @@
   <ItemGroup>
     <Reference Include="er.library.common">
       <HintPath>..\..\er-transformer-proxy-int\Libraries\er.library.common.dll</HintPath>
+      <Private>True</Private>
     </Reference>
   </ItemGroup>
 
