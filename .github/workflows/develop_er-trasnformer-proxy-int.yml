@@ -5,8 +5,7 @@ name: Build and deploy ASP.Net Core app to Azure Web App Prod - er-transformer-p
 
 on:
   push:
-    branches:
-      - [ "develop" ]
+    branches: [ "develop" ]
   workflow_dispatch:
 
 env:
